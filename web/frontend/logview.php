@@ -39,14 +39,19 @@ if (!$log->exists()) {
 <html lang="en">
     <head>
         <meta name="robots" content="noindex,nofollow">
-        <meta charset="utf-8" />
-        <meta name="theme-color" content="#2d3943" />
+	<meta charset="utf-8" />
+
+	<?php
+$themeColor = $_ENV['PRIMARY_COLOR'] ?? '#2d3943';
+?>
+	<meta name="theme-color" content="<?= htmlspecialchars($themeColor) ?>" />
 
         <title><?=$title; ?> - mclo.gs</title>
 
         <base href="/" />
 
-        <link rel="stylesheet" href="vendor/fonts/fonts.css" />
+	<link rel="stylesheet" href="/theme.php">	
+<link rel="stylesheet" href="vendor/fonts/fonts.css" />
         <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css" />
         <link rel="stylesheet" href="css/btn.css" />
         <link rel="stylesheet" href="css/mclogs.css?v=071224" />
@@ -80,7 +85,7 @@ if (!$log->exists()) {
         <header class="row navigation">
             <div class="row-inner">
                 <a href="/" class="logo">
-                    <img src="img/logo.png" />
+                    <img src="branding/logo.png" />
                 </a>
                 <div class="menu">
                     <a class="menu-item" href="/#info">
@@ -95,7 +100,7 @@ if (!$log->exists()) {
                     <a class="menu-item" href="/#api">
                         <i class="fa fa-code"></i> API
                     </a>
-                    <a class="menu-social btn btn-black btn-notext btn-large btn-no-margin" href="https://github.com/aternosorg/mclogs" target="_blank">
+                    <a class="menu-social btn btn-black btn-notext btn-large btn-no-margin" href="<?= getenv('GITHUB_URL') ?>" target="_blank">
                         <i class="fab fa-github"></i>
                     </a>
                 </div>
@@ -210,7 +215,7 @@ if (!$log->exists()) {
         </div>
         <div class="row footer">
             <div class="row-inner">
-                &copy; 2017-<?=date("Y"); ?> by mclo.gs - a service by <a target="_blank" href="https://aternos.org">Aternos</a> |
+                <?= getenv('FOOTER_LINE') ?>" |
                 <a target="_blank" href="<?=$legal['imprint']?>">Imprint</a> |
                 <a target="_blank" href="<?=$legal['privacy']?>">Privacy</a>
             </div>

@@ -10,13 +10,13 @@
 }
 
 .level-info {
-    color: #f0f0f0;
+    color: var(--secondary-color);
 }
 
 .level-title {
     font-weight: bold;
-    color: #f0f0f0;
-    background-color: #2d87d3;
+    color: var(--secondary-color);
+    background-color: var(--tertiary-color);
     padding: 0 8px;
     border-radius: 2px;
 }
@@ -24,18 +24,18 @@
 .level-info .level-prefix,
 .level-notice .level-prefix,
 .level-debug .level-prefix {
-    color: #2d87d3;
+    color: var(--tertiary-color);
 }
 
 .level-warning {
-    color: #FF6625;
+    color: var(--color-5);
 }
 
 .level-error,
 .level-critical,
 .level-emergency,
 .level-stacktrace {
-    color: #F62451;
+    color: var(--color-6);
 }
 
 .level-comment {
@@ -135,8 +135,8 @@
 }
 
 .highlight-error {
-    background: #F62451;
-    color: #f0f0f0;
+    background: var(--color-6);
+    color: var(--secondary-color);
     padding: 0px 3px;
     border-radius: 2px;
     font-weight: bold;
@@ -144,8 +144,8 @@
 }
 
 .highlight-warning {
-    background: #FF6625;
-    color: #f0f0f0;
+    background: var(--color-5);
+    color: var(--secondary-color);
     padding: 0px 3px;
     border-radius: 2px;
     font-weight: bold;
@@ -174,17 +174,17 @@
 }
 
 .line-number:hover {
-    color: #2d87d3;
+    color: var(--tertiary-color);
 }
 
 .line-active {
-    background: #2d87d3;
-    color: #f0f0f0;
+    background: var(--tertiary-color);
+    color: var(--secondary-color);
     border-radius: 2px;
 }
 
 .line-active:hover {
-    color: #f0f0f0;
+    color: var(--secondary-color);
     cursor: default;
 }
 

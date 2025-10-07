@@ -5,10 +5,15 @@ $legal = Config::Get('legal');
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <meta charset="utf-8" />
-        <meta name="theme-color" content="#2d3943" />
+	<meta charset="utf-8" />
+<?php
+$themeColor = $_ENV['PRIMARY_COLOR'] ?? '#2d3943';
+?>
 
-        <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Play:400,700">
+	<meta name="theme-color" content="<?= htmlspecialchars($themeColor) ?>" />
+
+	<link rel="stylesheet" href="/theme.php">	
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Play:400,700">
         <link href="https://fonts.googleapis.com/css?family=Roboto+Mono:300,400,400i,700,700i&amp;subset=cyrillic,cyrillic-ext,greek,greek-ext,latin-ext,vietnamese" rel="stylesheet" />
 
         <title>API Documentation - mclo.gs</title>
@@ -41,7 +46,7 @@ $legal = Config::Get('legal');
         <header class="row navigation">
             <div class="row-inner">
                 <a href="/" class="logo">
-                    <img src="img/logo.png" />
+                    <img src="branding/logo.png" />
                 </a>
                 <div class="menu">
                     <a class="menu-social btn btn-black btn-notext btn-large btn-no-margin" href="https://github.com/aternosorg/mclogs" target="_blank">
@@ -353,7 +358,7 @@ curl -X POST --data-urlencode 'content@path/to/latest.log' '<?=$urls['apiBaseUrl
         </div>
         <div class="row footer">
             <div class="row-inner">
-                &copy; 2017-<?=date("Y"); ?> by mclo.gs - a service by <a href="https://aternos.org">Aternos</a> | <a href="<?=$legal['imprint']?>">Imprint</a>
+                <?= getenv('FOOTER_LINE') ?>" | <a href="<?=$legal['imprint']?>">Imprint</a>
             </div>
         </div>
     </body>

@@ -7,11 +7,13 @@ $config = [
      *
      * Don't change! This will break all old IDs.
      */
-    "characters" => "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",
+    "characters" =>  getenv('ID_CHARACTERS') ? : "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",
 
     /**
      * ID length (-1 for storage ID)
      */
-    "length" => 6
+    'length' => ($env = getenv('ID_LENGTH')) !== false && $env !== ''
+    ? (int) $env
+    : 6,
 
 ];

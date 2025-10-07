@@ -16,8 +16,12 @@ WORKDIR /app
 # Copy application code
 COPY ../ ./
 
+COPY ../branding ./web/public/branding
+
 # Copy PHP config
 COPY docker/php-fpm/mclogs.ini /usr/local/etc/php/conf.d/mclogs.ini
+
+#RUN composer require vlucas/phpdotenv --no-interaction --no-scripts
 
 # Default command is to run Composer serve script
 CMD ["composer", "run-script", "serve"]

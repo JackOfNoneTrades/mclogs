@@ -6,13 +6,18 @@ $storage = \Config::Get('storage');
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <meta charset="utf-8" />
-        <meta name="theme-color" content="#2d3943" />
+	<meta charset="utf-8" />
+<?php
+$themeColor = $_ENV['PRIMARY_COLOR'] ?? '#2d3943';
+?>
+
+	<meta name="theme-color" content="<?= htmlspecialchars($themeColor) ?>" />
 
         <title>mclo.gs - Paste, share & analyse your Minecraft logs</title>
 
         <base href="/" />
 
+	<link rel="stylesheet" href="/theme.php">
         <link rel="stylesheet" href="vendor/fonts/fonts.css" />
         <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css" />
         <link rel="stylesheet" href="css/btn.css" />
@@ -40,7 +45,8 @@ $storage = \Config::Get('storage');
         <header class="row navigation">
             <div class="row-inner">
                 <a href="/" class="logo">
-                    <img src="img/logo.png" />
+	    <!--<img src="img/logo.png" />-->
+	    <img src="branding/logo.png" />
                 </a>
                 <div class="menu">
                     <a class="menu-item" href="/#info">
@@ -55,7 +61,7 @@ $storage = \Config::Get('storage');
                     <a class="menu-item" href="/#api">
                         <i class="fa fa-code"></i> API
                     </a>
-                    <a class="menu-social btn btn-black btn-notext btn-large btn-no-margin" href="https://github.com/aternosorg/mclogs" target="_blank">
+                    <a class="menu-social btn btn-black btn-notext btn-large btn-no-margin" href="<?php echo getenv('GITHUB_URL') ?>" target="_blank">
                         <i class="fab fa-github"></i>
                     </a>
                 </div>
@@ -224,12 +230,33 @@ $storage = \Config::Get('storage');
             </div>
         </div>
         <div class="row footer">
-            <div class="row-inner">
-                &copy; 2017-<?=date("Y"); ?> by mclo.gs - a service by <a target="_blank" href="https://aternos.org">Aternos</a> |
+	    <div class="row-inner">
+		<?= getenv('FOOTER_LINE') ?> |
                 <a target="_blank" href="<?=$legal['imprint']?>">Imprint</a> |
                 <a target="_blank" href="<?=$legal['privacy']?>">Privacy</a>
             </div>
-        </div>
+	</div>
+	<?php
+// Set default titles
+$defaultTitles = ['Paste', 'Share', 'Analyse'];
+
+$titlesEnv = getenv('TITLES');
+
+if ($titlesEnv) {
+    // Split and trim
+    $titles = array_map('trim', explode(',', $titlesEnv));
+} else {
+    $titles = $defaultTitles;
+}
+
+// Escape safely for JS
+$safeTitles = array_map('json_encode', $titles);
+$jsArray = '[' . implode(',', $safeTitles) . ']';
+?>
+
+<script>
+  window.titles = <?= $jsArray ?>;
+</script>
         <script src="js/mclogs.js?v=130222"></script>
     </body>
 </html>

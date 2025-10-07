@@ -4,3 +4,5 @@
 config.php
 /vendor/
 mongo.php
+.env
+branding/logo.png

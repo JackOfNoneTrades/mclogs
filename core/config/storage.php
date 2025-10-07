@@ -30,25 +30,24 @@ $config = [
      *
      * Should be a key in the $storages array
      */
-    "storageId" => "m",
+    "storageId" => getenv('STORAGE_ID') ? : "m",
 
     /**
      * Time in seconds to store data after put or last renew
      */
-    "storageTime" => 90 * 24 * 60 * 60,
+	'storageTime' => ($env = getenv('STORAGE_TIME')) !== false && $env !== ''
+    ? (int) $env
+    : 90 * 24 * 60 * 60,
 
-    /**
-     * Maximum string length to store
-     *
-     * Will be cut by \Filter\Pre\Length
-     */
-    "maxLength" => 10 * 1024 * 1024,
 
-    /**
-     * Maximum number of lines to store
-     *
-     * Will be cut by \Filter\Pre\Lines
-     */
-    "maxLines" => 25_000
+    
+    'maxLength' => ($env = getenv('MAX_LENGTH')) !== false && $env !== ''
+    ? (int) $env
+    : 10 * 1024 * 1024, // 10 MB
+
+    /* Will be cut by length filter */
+'maxLines' => ($env = getenv('MAX_LINES')) !== false && $env !== ''
+    ? (int) $env
+    : 25_000,
 
 ];

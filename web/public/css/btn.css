@@ -2,8 +2,8 @@
     line-height: 1;
     border-radius: 2px;
     font-weight: bold;
-    color: #f0f0f0;
-    background: #2d3943;
+    color: var(--secondary-color);
+    background: var(--primary-color);
     padding: 8px 15px 8px 10px;
     font-size: 18px;
     margin: 10px 8px 10px 0px;
@@ -116,27 +116,27 @@
 
 .btn-label {
     margin-left: 8px;
-    background: #f0f0f0;
-    color: #2d3943;
+    background: var(--secondary-color);
+    color: var(--primary-color);
     padding: 0 3px;
     border-radius: 2px;
 }
 
 .btn-white {
-    background-color: #f0f0f0;
-    color: #2d3943;
+    background-color: var(--secondary-color);
+    color: var(--primary-color);
 }
 
 .btn-black {
-    background-color: #2d3943;
+    background-color: var(--primary-color);
 }
 
 .btn-green {
-    background-color: #1FD78D;
+    background-color: var(--color-4);
 }
 
 .btn-red {
-    background-color: #F62451;
+    background-color: var(--color-5);
 }
 
 .btn-orange {
@@ -144,12 +144,12 @@
 }
 
 .btn-blue {
-    background-color: #2d87d3;
+    background-color: var(--tertiary-color);
 }
 
 .btn-yellow {
     background-color: #FFCA25;
-    color: #f0f0f0;
+    color: var(--secondary-color);
 }
 
 .btn-small {

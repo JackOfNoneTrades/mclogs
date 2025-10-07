@@ -18,8 +18,8 @@ a {
 }
 
 body {
-    color: #2d3943;
-    background: #f0f0f0;
+    color: var(--primary-color);
+    background: var(--secondary-color);
     font-family: Play, sans-serif;
 }
 
@@ -31,8 +31,8 @@ body {
 }
 
 .row.dark {
-    background: #2d3943;
-    color: #f0f0f0;
+    background: var(--primary-color);
+    color: var(--secondary-color);
 }
 
 .row-inner {
@@ -83,8 +83,8 @@ body {
 }
 
 .title-verb {
-    background: #f0f0f0;
-    color: #2d3943;
+    background: var(--secondary-color);
+    color: var(--primary-color);
     padding: 0 8px;
     border-radius: 2px;
 }
@@ -97,19 +97,19 @@ body {
 .paste-box {
     width: 1000px;
     max-width: 100%;
-    border: 3px solid #f0f0f0;
+    border: 3px solid var(--secondary-color);
     border-radius: 3px;
 }
 
 .paste-header {
-    background: #f0f0f0;
-    color: #2d3943;
+    background: var(--secondary-color);
+    color: var(--primary-color);
     font-weight: bold;
     padding: 6px 10px;
     font-size: 18px;
     display: flex;
     align-items: center;
-    border-bottom: 3px solid #f0f0f0;
+    border-bottom: 3px solid var(--secondary-color);
 }
 
 .paste-box .btn {
@@ -118,11 +118,11 @@ body {
 
 .paste-footer {
     font-size: 18px;
-    background: #f0f0f0;
+    background: var(--secondary-color);
     padding: 6px 10px;
     display: flex;
     justify-content: flex-end;
-    border-top: 3px solid #f0f0f0;
+    border-top: 3px solid var(--secondary-color);
 }
 
 .paste-header-text {
@@ -145,8 +145,8 @@ body {
 }
 
 .paste-error {
-    background: #f62451;
-    color: #f0f0f0;
+    background: var(--color-6);
+    color: var(--secondary-color);
     font-weight: bold;
     line-height: 1;
     border-radius: 2px;
@@ -179,17 +179,17 @@ body {
 
 .info-blue .info-icon,
 .info-blue .info-title {
-    color: #2d87d3;
+    color: var(--tertiary-color);
 }
 
 .info-green .info-icon,
 .info-green .info-title {
-    color: #1FD78D;
+    color: var(--color-4);
 }
 
 .info-red .info-icon,
 .info-red .info-title {
-    color: #F62451;
+    color: var(--color-6);
 }
 
 .info-text {
@@ -253,7 +253,7 @@ body {
     outline: none;
     width: 100%;
     height: 100%;
-    color: #f0f0f0;
+    color: var(--secondary-color);
     padding: 10px;
     font-family: "Roboto Mono", monospace;
     font-size: 14px;
@@ -341,8 +341,8 @@ body {
 }
 
 .method {
-    background: #2d3943;
-    color: #f0f0f0;
+    background: var(--primary-color);
+    color: var(--secondary-color);
     padding: 2px 5px;
     border-radius: 2px;
     font-weight: bold;
@@ -355,8 +355,8 @@ body {
 
 .endpoint-table {
     margin: 12px 0 20px;
-    background: #2d3943;
-    color: #f0f0f0;
+    background: var(--primary-color);
+    color: var(--secondary-color);
     border-radius: 2px;
 }
 
@@ -372,8 +372,8 @@ body {
 
 .answer {
     margin: 8px 0 16px;
-    background: #2d3943;
-    color: #f0f0f0;
+    background: var(--primary-color);
+    color: var(--secondary-color);
     border-radius: 2px;
     padding: 16px;
 }
@@ -474,12 +474,12 @@ body {
 
 .collapsed-lines-count:hover {
     cursor:  pointer;
-    color: #2d87d3;
+    color: var(--tertiary-color);
 }
 
 .analysis {
     background: #2b87d3;
-    color: #f0f0f0;
+    color: var(--secondary-color);
     padding: 16px 24px 6px;
     border-radius: 3px;
     margin-bottom: 12px;
@@ -501,7 +501,7 @@ body {
 }
 
 .problem-header {
-    background: #f0f0f0;
+    background: var(--secondary-color);
     color: #2b87d3;
     font-weight: bold;
     padding: 8px 14px;
@@ -520,11 +520,11 @@ body {
 
 .problem-solution-list {
     padding-left: 10px;
-    border-left: 3px solid #f0f0f0;
+    border-left: 3px solid var(--secondary-color);
 }
 
 .information-value {
-    background: #f0f0f0;
+    background: var(--secondary-color);
     color: #2b87d3;
     font-weight: bold;
     padding: 0 4px;

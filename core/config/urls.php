@@ -7,13 +7,13 @@ $config = [
      *
      * Should not end with a slash
      */
-    "baseUrl" => "https://mclogs.fentanylsolutions.org",
+    "baseUrl" => getenv("BASE_URL"),
 
     /**
      * The base URL for the API
      *
      * Should not end with a slash
      */
-    "apiBaseUrl" => "https://api-mclogs.fentanylsolutions.org",
+    "apiBaseUrl" => getenv("API_BASE_URL"),
 
 ];

@@ -1,4 +1,4 @@
-const titles = ["Paste", "Share", "Analyse"];
+const titles = window.titles; //["Paste", "Share", "Analyse"];
 let currentTitle = 0;
 let speed = 30;
 let pause = 3000;

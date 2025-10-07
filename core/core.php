@@ -1,6 +1,6 @@
 <?php
 
-use Dotenv\Dotenv;
+/*use Dotenv\Dotenv;
 
 // Load .env
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../'); // path to project root
@@ -19,9 +19,13 @@ foreach ($required as $var) {
 $mongoUrl = $_ENV['MONGO_URL'];
 $apiBaseUrl = $_ENV['API_BASE_URL'];
 
+ */
+
+
 define('CORE_PATH', realpath(dirname(__FILE__)));
 
 require_once(CORE_PATH.'/../vendor/autoload.php');
+
 
 spl_autoload_register(function ($class) {
     $class = str_replace("\\", "/", $class);
