@@ -7,13 +7,13 @@ $config = [
      *
      * Should not end with a slash
      */
-    "baseUrl" => "https://mclo.gs",
+    "baseUrl" => "https://mclogs.fentanylsolutions.org",
 
     /**
      * The base URL for the API
      *
      * Should not end with a slash
      */
-    "apiBaseUrl" => "https://api.mclo.gs",
+    "apiBaseUrl" => "https://api-mclogs.fentanylsolutions.org",
 
 ];

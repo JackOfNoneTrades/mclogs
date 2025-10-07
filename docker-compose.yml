@@ -1,0 +1,23 @@
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - 127.0.0.1:8082:80    # frontend
+      - 127.0.0.1:8083:81
+    volumes:
+      - .:/web/mclogs
+      - ./docker/nginx/mclogs.conf:/etc/nginx/conf.d/default.conf
+    links:
+      - php-fpm
+  php-fpm:
+    build:
+      context: .
+      dockerfile: docker/php-fpm/Dockerfile
+    volumes:
+      - .:/web/mclogs
+  mongo:
+    image: mongo
+    volumes:
+      - mongo:/data/db
+volumes:
+  mongo:

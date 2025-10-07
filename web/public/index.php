@@ -1,6 +1,7 @@
 <?php
 
 require_once("../../core/core.php");
+require_once("../../core/config/urls.php");
 
 switch ($_SERVER['REQUEST_URI']) {
     case "/":
@@ -10,3 +11,11 @@ switch ($_SERVER['REQUEST_URI']) {
         require_once("../frontend/logview.php");
         break;
 }
+
+?>
+
+<script>
+    window.MCLOGS_CONFIG = {
+        apiBaseUrl: '<?php echo $config["apiBaseUrl"]; ?>'
+    };
+</script>

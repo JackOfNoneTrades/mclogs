@@ -9,11 +9,20 @@
     ],
     "require": {
         "php": ">=8.1",
-        "mongodb/mongodb": "1.20.0",
+	"mongodb/mongodb": "1.20.0",
         "ext-json": "*",
         "aternos/codex-minecraft": "^3.5.0",
         "aternos/sherlock": "^1.0.2",
         "ext-zlib": "*",
         "ext-mbstring": "*"
+    },
+
+    "scripts": {
+        "serve": [
+            "@putenv COMPOSER_ALLOW_SUPERUSER=1",
+            "Composer\\Config::disableProcessTimeout",
+            "@composer install --no-interaction",
+            "php-fpm"
+        ]
     }
 }

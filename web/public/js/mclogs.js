@@ -62,7 +62,7 @@ async function sendLog() {
             .substring(0, parseInt(pasteArea.dataset.maxLength))
             .split('\n').slice(0, parseInt(pasteArea.dataset.maxLines)).join('\n');
 
-        const response = await fetch(`${location.protocol}//api-${location.host}/1/log`, {
+        /*const response = await fetch(`${location.protocol}//api.${location.host}/1/log`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded"
@@ -70,7 +70,13 @@ async function sendLog() {
             body: new URLSearchParams({
                 "content": log
             })
-        });
+        });*/
+	const apiBase = window.MCLOGS_CONFIG?.apiBaseUrl || `${location.protocol}//api.${location.host}`;
+	    const response = await fetch(`${apiBase}/1/log`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ content: log })
+});
 
         if (!response.ok) {
             handleUploadError(`${response.status} (${response.statusText})`);
