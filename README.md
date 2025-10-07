@@ -22,6 +22,7 @@ suggestions based on the log content to simply solve common errors.
 * Clone repository: `git clone [URL]`
 * `cd mclogs/docker`
 * `docker-compose up`
+* In another terminal, in the `mclogs/docker` folder, run `docker compose exec php-fpm composer install`.
 * Open http://localhost in browser and enjoy
 
 ## License
