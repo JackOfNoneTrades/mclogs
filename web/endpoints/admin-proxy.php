@@ -46,6 +46,12 @@ curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 // Forward the HTTP method
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     curl_setopt($ch, CURLOPT_POST, true);
+    // Forward POST body
+    $postData = file_get_contents('php://input');
+    if ($postData) {
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    }
 } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
 }
