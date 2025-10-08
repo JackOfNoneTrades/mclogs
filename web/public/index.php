@@ -4,17 +4,31 @@ require_once("../../core/core.php");
 require_once("../../core/config/urls.php");
 
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$query = parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY);
+parse_str($query ?: '', $params);
 
 // Handle admin logout FIRST, before any output
-if ($uri === '/admin' && isset($_GET['logout'])) {
-    session_start();
+if ($uri === '/admin' && isset($params['logout'])) {
+    @session_start();
     $_SESSION = array();
-    if (isset($_COOKIE[session_name()])) {
-        setcookie(session_name(), '', time() - 42000, '/');
+    
+    // Get session name
+    $sessionName = session_name();
+    
+    // Delete session cookie
+    if (isset($_COOKIE[$sessionName])) {
+        setcookie($sessionName, '', time() - 3600, '/', '', false, true);
+        unset($_COOKIE[$sessionName]);
     }
-    session_destroy();
-    header('Location: /admin');
-    exit;
+    
+    // Destroy session
+    @session_destroy();
+    
+    // Send redirect with cache control headers
+    header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+    header('Pragma: no-cache');
+    header('Location: /admin', true, 302);
+    die();
 }
 
 // Handle admin proxy routes
