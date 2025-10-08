@@ -566,6 +566,7 @@ if (count($pathParts) == 2 && $pathParts[1] == 'settings') {
             if (strpos($trimmedLine, '=') !== false) {
                 list($key, $oldValue) = explode('=', $trimmedLine, 2);
                 $key = trim($key);
+                $oldValue = trim($oldValue);
                 
                 // Don't allow updating ADMIN_TOKEN
                 if ($key === 'ADMIN_TOKEN') {
@@ -576,12 +577,38 @@ if (count($pathParts) == 2 && $pathParts[1] == 'settings') {
                 // If we have a new value for this key, update it
                 if (isset($input[$key])) {
                     $newValue = $input[$key];
-                    // Add quotes if value contains spaces or special chars
-                    if (strpos($newValue, ' ') !== false || strpos($newValue, '#') !== false) {
-                        $newValue = '"' . $newValue . '"';
+                    
+                    // Detect original quote style from old value
+                    $useQuotes = false;
+                    $quoteChar = "'";
+                    if (strlen($oldValue) >= 2) {
+                        if ($oldValue[0] === '"' && substr($oldValue, -1) === '"') {
+                            $useQuotes = true;
+                            $quoteChar = '"';
+                        } elseif ($oldValue[0] === "'" && substr($oldValue, -1) === "'") {
+                            $useQuotes = true;
+                            $quoteChar = "'";
+                        }
                     }
+                    
+                    // Decide if we need quotes
+                    if (!$useQuotes && (strpos($newValue, ' ') !== false || strpos($newValue, '#') !== false)) {
+                        $useQuotes = true;
+                        $quoteChar = "'"; // Default to single quotes
+                    }
+                    
+                    // Apply quotes if needed
+                    if ($useQuotes) {
+                        // Escape the quote character in the value
+                        $escapedValue = str_replace($quoteChar, '\\' . $quoteChar, $newValue);
+                        $newValue = $quoteChar . $escapedValue . $quoteChar;
+                    }
+                    
                     $newLines[] = $key . '=' . $newValue;
                     $updatedKeys[] = $key;
+                    
+                    // Update environment variable immediately
+                    putenv($key . '=' . $input[$key]);
                 } else {
                     $newLines[] = $line;
                 }
