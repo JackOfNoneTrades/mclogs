@@ -97,8 +97,13 @@ async function encryptLog(text, password) {
     result.set(iv, salt.length);
     result.set(new Uint8Array(encrypted), salt.length + iv.length);
     
-    // Return as base64
-    return btoa(String.fromCharCode(...result));
+    // Return as base64 - avoid spread operator to prevent RangeError on large arrays
+    let binary = '';
+    const len = result.length;
+    for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(result[i]);
+    }
+    return btoa(binary);
 }
 
 /**

@@ -326,10 +326,11 @@ $themeColor = $_ENV['PRIMARY_COLOR'] ?? '#2d3943';
         // Decryption function for password-protected logs
         async function decryptLog(encryptedBase64, password) {
             try {
-                // Decode base64
+                // Decode base64 
                 const binaryString = atob(encryptedBase64);
-                const bytes = new Uint8Array(binaryString.length);
-                for (let i = 0; i < binaryString.length; i++) {
+                const len = binaryString.length;
+                const bytes = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
                     bytes[i] = binaryString.charCodeAt(i);
                 }
                 
