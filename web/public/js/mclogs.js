@@ -47,6 +47,100 @@ document.addEventListener('keydown', event => {
 })
 
 /**
+ * Privacy Filters - Applied client-side before upload
+ */
+
+// IP Address Filter
+function filterIpAddresses(data) {
+    // IPv6 pattern
+    const ipv6Pattern = /(?<=^|\W)((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}))|:)))(%.+)?(?=$|\W)/g;
+    
+    // IPv4 pattern (exclude "version: " and "version ")
+    const ipv4Pattern = /(?<!version: )(?<!version )(?<!([0-9]|-|\w))([0-9]{1,3}\.){3}[0-9]{1,3}(?![0-9])/gi;
+    
+    // IPv6 whitelist (localhost)
+    const ipv6Whitelist = [/^[0:]+1?$/];
+    
+    // IPv4 whitelist (localhost, 0.0.0.0, DNS servers)
+    const ipv4Whitelist = [
+        /^127\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$/,
+        /^0\.0\.0\.0$/,
+        /^1\.[01]\.[01]\.1$/,
+        /^8\.8\.[84]\.[84]$/
+    ];
+    
+    // Filter IPv6
+    data = data.replace(ipv6Pattern, (match) => {
+        for (const whitelist of ipv6Whitelist) {
+            if (whitelist.test(match)) {
+                return match;
+            }
+        }
+        return '****:****:****:****:****:****:****:****';
+    });
+    
+    // Filter IPv4
+    data = data.replace(ipv4Pattern, (match) => {
+        for (const whitelist of ipv4Whitelist) {
+            if (whitelist.test(match)) {
+                return match;
+            }
+        }
+        return '**.**.**.**';
+    });
+    
+    return data;
+}
+
+// Username Filter
+function filterUsernames(data) {
+    const patterns = [
+        // Windows with backslashes
+        { pattern: /C:\\Users\\([^\\]+)\\/g, replacement: 'C:\\Users\\********\\' },
+        // Windows with double backslashes
+        { pattern: /C:\\\\Users\\\\([^\\]+)\\\\/g, replacement: 'C:\\\\Users\\\\********\\\\' },
+        // Windows with forward slashes
+        { pattern: /C:\/Users\/([^\/]+)\//g, replacement: 'C:/Users/********/' },
+        // Linux
+        { pattern: /(?<!\w)\/home\/[^\/]+\//g, replacement: '/home/********/' },
+        // macOS
+        { pattern: /(?<!\w)\/Users\/[^\/]+\//g, replacement: '/Users/********/' },
+        // Environment variable
+        { pattern: /^USERNAME=.+$/gm, replacement: 'USERNAME=********' }
+    ];
+    
+    for (const {pattern, replacement} of patterns) {
+        data = data.replace(pattern, replacement);
+    }
+    
+    return data;
+}
+
+// Access Token Filter
+function filterAccessTokens(data) {
+    const patterns = [
+        // Session ID
+        { pattern: /\(Session ID is token:[^:]+:[^)]+\)/g, replacement: '(Session ID is token:****************:****************)' },
+        // Access token argument
+        { pattern: /--accessToken [^ ]+/g, replacement: '--accessToken ****************:****************' }
+    ];
+    
+    for (const {pattern, replacement} of patterns) {
+        data = data.replace(pattern, replacement);
+    }
+    
+    return data;
+}
+
+// Apply all privacy filters
+function applyPrivacyFilters(data) {
+    data = filterIpAddresses(data);
+    data = filterUsernames(data);
+    data = filterAccessTokens(data);
+    return data;
+}
+
+/**
  * Encrypt log content using AES-GCM with PBKDF2 key derivation
  * @param {string} text - The text to encrypt
  * @param {string} password - The password to use
@@ -122,6 +216,9 @@ async function sendLog() {
         let log = pasteArea.value
             .substring(0, parseInt(pasteArea.dataset.maxLength))
             .split('\n').slice(0, parseInt(pasteArea.dataset.maxLines)).join('\n');
+
+        // Apply privacy filters BEFORE encryption/upload
+        log = applyPrivacyFilters(log);
 
         // Get expiration options
         const noResetTimer = document.getElementById('no-reset-timer')?.checked || false;
