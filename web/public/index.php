@@ -3,9 +3,14 @@
 require_once("../../core/core.php");
 require_once("../../core/config/urls.php");
 
-switch ($_SERVER['REQUEST_URI']) {
+$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+switch ($uri) {
     case "/":
         require_once("../frontend/main.php");
+        break;
+    case "/admin":
+        require_once("../frontend/admin.php");
         break;
     default:
         require_once("../frontend/logview.php");
