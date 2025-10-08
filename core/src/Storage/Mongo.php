@@ -12,9 +12,11 @@ class Mongo extends \Client\MongoDBClient implements StorageInterface
      * Put some data in the storage, returns the (new) id for the data
      *
      * @param string $data
+     * @param bool $noResetTimer Don't reset expiry timer on access
+     * @param int|null $expiryDays Custom expiration time in days
      * @return ?\Id ID or false
      */
-    public static function Put(string $data): ?\Id
+    public static function Put(string $data, bool $noResetTimer = false, ?int $expiryDays = null): ?\Id
     {
         $config = \Config::Get("storage");
         $id = new \Id();
@@ -24,12 +26,19 @@ class Mongo extends \Client\MongoDBClient implements StorageInterface
             $id->regenerate();
         } while (self::Get($id) !== null);
 
-        $date = new UTCDateTime((time() + $config['storageTime']) * 1000);
+        // Calculate expiry time
+        $expiryTime = $config['storageTime'];
+        if ($expiryDays !== null && $expiryDays > 0) {
+            $expiryTime = $expiryDays * 86400; // Convert days to seconds
+        }
+        
+        $date = new UTCDateTime((time() + $expiryTime) * 1000);
 
         self::getCollection()->insertOne([
             "_id" => $id->getRaw(),
             "expires" => $date,
-            "data" => $data
+            "data" => $data,
+            "no_reset_timer" => $noResetTimer
         ]);
 
         return $id;
@@ -60,6 +69,14 @@ class Mongo extends \Client\MongoDBClient implements StorageInterface
      */
     public static function Renew(\Id $id): bool
     {
+        // Check if timer should be reset
+        $result = self::getCollection()->findOne(["_id" => $id->getRaw()], ['projection' => ['no_reset_timer' => 1]]);
+        
+        if ($result && isset($result->no_reset_timer) && $result->no_reset_timer) {
+            // Don't reset timer if no_reset_timer flag is set
+            return true;
+        }
+        
         $config = \Config::Get("storage");
         $date = new UTCDateTime((time() + $config['storageTime']) * 1000);
 

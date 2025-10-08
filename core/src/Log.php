@@ -293,9 +293,11 @@ class Log
      * Put data into the log
      *
      * @param string $data
+     * @param bool $noResetTimer Don't reset expiry timer on access
+     * @param int|null $expiryDays Custom expiration time in days
      * @return ?Id
      */
-    public function put(string $data): ?Id
+    public function put(string $data, bool $noResetTimer = false, ?int $expiryDays = null): ?Id
     {
         $this->data = $data;
         $this->preFilter();
@@ -307,7 +309,7 @@ class Log
          */
         $storage = $config['storages'][$config['storageId']]['class'];
 
-        $this->id = $storage::Put($this->data);
+        $this->id = $storage::Put($this->data, $noResetTimer, $expiryDays);
         $this->exists = true;
 
         return $this->id;

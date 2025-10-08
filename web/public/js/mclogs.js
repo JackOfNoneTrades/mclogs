@@ -62,21 +62,25 @@ async function sendLog() {
             .substring(0, parseInt(pasteArea.dataset.maxLength))
             .split('\n').slice(0, parseInt(pasteArea.dataset.maxLines)).join('\n');
 
-        /*const response = await fetch(`${location.protocol}//api.${location.host}/1/log`, {
+        // Get expiration options
+        const noResetTimer = document.getElementById('no-reset-timer')?.checked || false;
+        const expiryDays = document.getElementById('expiry-days')?.value || '';
+        
+        // Build request params
+        const params = { content: log };
+        if (noResetTimer) {
+            params.no_reset_timer = '1';
+        }
+        if (expiryDays !== '' && parseInt(expiryDays) > 0) {
+            params.expiry_days = expiryDays;
+        }
+
+        const apiBase = window.MCLOGS_CONFIG?.apiBaseUrl || `${location.protocol}//api.${location.host}`;
+        const response = await fetch(`${apiBase}/1/log`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded"
-            },
-            body: new URLSearchParams({
-                "content": log
-            })
-        });*/
-	const apiBase = window.MCLOGS_CONFIG?.apiBaseUrl || `${location.protocol}//api.${location.host}`;
-	    const response = await fetch(`${apiBase}/1/log`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ content: log })
-});
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams(params)
+        });
 
         if (!response.ok) {
             handleUploadError(`${response.status} (${response.statusText})`);
@@ -283,4 +287,3 @@ dropZone.addEventListener('drop', async e => {
 });
 
 fileSelectButton.addEventListener('click', selectLogFile);
-

@@ -8,9 +8,11 @@ interface StorageInterface
      * Put some data in the storage, returns the (new) id for the data
      *
      * @param string $data
-     * @return ?\Id ID or null
+     * @param bool $noResetTimer Don't reset expiry timer on access
+     * @param int|null $expiryDays Custom expiration time in days
+     * @return ?\Id ID or false
      */
-    public static function Put(string $data): ?\Id;
+    public static function Put(string $data, bool $noResetTimer = false, ?int $expiryDays = null): ?\Id;
 
     /**
      * Get some data from the storage by id
