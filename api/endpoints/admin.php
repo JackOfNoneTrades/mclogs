@@ -480,6 +480,8 @@ if (count($pathParts) == 2 && $pathParts[1] == 'settings') {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Read .env file
         $envPath = CORE_PATH . '/../.env';
+        $envExamplePath = CORE_PATH . '/../.env-example';
+        
         if (!file_exists($envPath)) {
             http_response_code(404);
             echo json_encode([
@@ -489,9 +491,50 @@ if (count($pathParts) == 2 && $pathParts[1] == 'settings') {
             exit;
         }
         
+        $settings = [];
+        
+        // First, read .env-example to get all possible settings with defaults
+        if (file_exists($envExamplePath)) {
+            $exampleContent = file_get_contents($envExamplePath);
+            $exampleLines = explode("\n", $exampleContent);
+            
+            foreach ($exampleLines as $line) {
+                $line = trim($line);
+                // Parse commented settings too (they start with #)
+                if (empty($line)) {
+                    continue;
+                }
+                
+                // Remove leading # if present
+                if ($line[0] === '#') {
+                    $line = trim(substr($line, 1));
+                }
+                
+                if (strpos($line, '=') !== false) {
+                    list($key, $value) = explode('=', $line, 2);
+                    $key = trim($key);
+                    $value = trim($value);
+                    
+                    // Skip ADMIN_TOKEN for security
+                    if ($key === 'ADMIN_TOKEN') {
+                        continue;
+                    }
+                    
+                    // Remove quotes if present
+                    if ((substr($value, 0, 1) === '"' && substr($value, -1) === '"') ||
+                        (substr($value, 0, 1) === "'" && substr($value, -1) === "'")) {
+                        $value = substr($value, 1, -1);
+                    }
+                    
+                    // Store with default value from example
+                    $settings[$key] = $value;
+                }
+            }
+        }
+        
+        // Then override with actual values from .env
         $envContent = file_get_contents($envPath);
         $lines = explode("\n", $envContent);
-        $settings = [];
         
         foreach ($lines as $line) {
             $line = trim($line);
@@ -517,6 +560,7 @@ if (count($pathParts) == 2 && $pathParts[1] == 'settings') {
                     $value = substr($value, 1, -1);
                 }
                 
+                // Override with actual value
                 $settings[$key] = $value;
             }
         }

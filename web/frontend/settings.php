@@ -169,11 +169,12 @@ if (!$authenticated) {
             
             // Group settings by category
             const categories = {
-                'Basic Configuration': ['BASE_URL', 'API_BASE_URL', 'ABUSE_EMAIL'],
-                'Branding': ['IMPRINT', 'PRIVACY', 'GITHUB_URL', 'SERVICE_BY', 'SERVICE_BY_URL', 'FOOTER_LINE'],
-                'Storage': ['STORAGE_ID', 'STORAGE_TIME', 'MAX_LENGTH', 'MAX_LINES', 'FS_PATH'],
+                'Basic Configuration': ['BASE_URL', 'API_BASE_URL', 'ABUSE_EMAIL', 'MONGO_URL'],
+                'Branding': ['IMPRINT', 'PRIVACY', 'GITHUB_URL', 'SERVICE_BY', 'SERVICE_BY_URL', 'FOOTER_LINE', 'TITLES'],
+                'Colors & Theme': ['PRIMARY_COLOR', 'SECONDARY_COLOR', 'TERTIARY_COLOR', 'COLOR_4', 'COLOR_5', 'COLOR_6'],
+                'Storage': ['STORAGE_ID', 'STORAGE_TIME', 'MAX_FILE_LENGTH', 'MAX_LINES', 'FS_PATH'],
                 'Admin': ['MAX_LOGS_PAGE'],
-                'Advanced': ['CACHE_ID', 'PRE_FILTERS', 'ID_CHARACTERS', 'ID_LENGTH', 'MONGO_URL']
+                'Advanced': ['CACHE_ID', 'PRE_FILTERS', 'ID_CHARACTERS', 'ID_LENGTH']
             };
             
             for (const [category, keys] of Object.entries(categories)) {
