@@ -143,10 +143,19 @@ if (count($pathParts) == 2 && $pathParts[1] == 'logs') {
                 $size = isset($doc->data) ? strlen($doc->data) : 0;
                 $created = isset($doc->expires) ? date('Y-m-d H:i:s', $doc->expires->toDateTime()->getTimestamp()) : 'N/A';
                 
+                // Explicitly handle _id
+                $id = $doc->_id;
+                // If it's an object, convert to string
+                if (is_object($id)) {
+                    $id = (string)$id;
+                }
+                
                 $logs[] = [
-                    'id' => $doc->_id,
+                    'id' => $id,
                     'size' => $size,
-                    'created' => $created
+                    'created' => $created,
+                    'debug_id_type' => gettype($doc->_id),
+                    'debug_id_class' => is_object($doc->_id) ? get_class($doc->_id) : 'not_object'
                 ];
             }
         }
