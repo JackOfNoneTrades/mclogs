@@ -210,7 +210,10 @@ if (!$authenticated && isset($_POST['admin_token'])) {
     <?php else: ?>
         <div class="header">
             <h1>Admin Dashboard</h1>
-            <a href="/admin?logout=1" class="logout-btn">Logout</a>
+            <form method="POST" action="/admin" style="display: inline;">
+                <input type="hidden" name="logout" value="1">
+                <button type="submit" class="logout-btn">Logout</button>
+            </form>
         </div>
 
         <div class="stats">

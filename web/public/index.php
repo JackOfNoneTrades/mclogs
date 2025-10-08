@@ -4,11 +4,9 @@ require_once("../../core/core.php");
 require_once("../../core/config/urls.php");
 
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$query = parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY);
-parse_str($query ?: '', $params);
 
-// Handle admin logout FIRST, before any output
-if ($uri === '/admin' && isset($params['logout'])) {
+// Handle admin logout FIRST, before any output (now using POST)
+if ($uri === '/admin' && isset($_POST['logout'])) {
     @session_start();
     $_SESSION = array();
     
