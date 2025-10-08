@@ -1,17 +1,6 @@
 <?php
-// Check authentication
+// Handle logout FIRST, before any other logic
 session_start();
-$authenticated = isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] === true;
-
-if (!$authenticated && isset($_POST['admin_token'])) {
-    $adminToken = getenv('ADMIN_TOKEN');
-    if ($adminToken && $_POST['admin_token'] === $adminToken) {
-        $_SESSION['admin_authenticated'] = true;
-        // Note: We do NOT store the token in the session - it's kept secure server-side
-        $authenticated = true;
-    }
-}
-
 if (isset($_GET['logout'])) {
     // Clear all session variables
     $_SESSION = array();
@@ -24,9 +13,21 @@ if (isset($_GET['logout'])) {
     // Destroy the session
     session_destroy();
     
-    // Redirect to admin page
+    // Redirect to admin page (must exit immediately)
     header('Location: /admin');
-    exit;
+    exit();
+}
+
+// Check authentication
+$authenticated = isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] === true;
+
+if (!$authenticated && isset($_POST['admin_token'])) {
+    $adminToken = getenv('ADMIN_TOKEN');
+    if ($adminToken && $_POST['admin_token'] === $adminToken) {
+        $_SESSION['admin_authenticated'] = true;
+        // Note: We do NOT store the token in the session - it's kept secure server-side
+        $authenticated = true;
+    }
 }
 ?>
 <!DOCTYPE html>
