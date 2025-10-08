@@ -7,7 +7,7 @@ if (!$authenticated && isset($_POST['admin_token'])) {
     $adminToken = getenv('ADMIN_TOKEN');
     if ($adminToken && $_POST['admin_token'] === $adminToken) {
         $_SESSION['admin_authenticated'] = true;
-        $_SESSION['admin_token'] = $_POST['admin_token'];
+        // Note: We do NOT store the token in the session - it's kept secure server-side
         $authenticated = true;
     }
 }
@@ -251,13 +251,11 @@ if (isset($_GET['logout'])) {
         </div>
 
         <script>
-            const apiBaseUrl = '<?php echo $config["apiBaseUrl"]; ?>';
-            const adminToken = '<?php echo isset($_SESSION['admin_token']) ? $_SESSION['admin_token'] : ''; ?>';
-
+            // Use local proxy instead of direct API calls to keep token secure
             async function loadLogs() {
                 document.getElementById('status').textContent = 'Loading...';
                 try {
-                    const response = await fetch(apiBaseUrl + '/admin/logs?token=' + encodeURIComponent(adminToken));
+                    const response = await fetch('/admin-proxy/logs');
                     const data = await response.json();
                     
                     if (data.success) {
@@ -319,7 +317,7 @@ if (isset($_GET['logout'])) {
                 }
 
                 try {
-                    const response = await fetch(apiBaseUrl + '/admin/delete/' + logId + '?token=' + encodeURIComponent(adminToken), {
+                    const response = await fetch('/admin-proxy/delete/' + encodeURIComponent(logId), {
                         method: 'POST'
                     });
                     const data = await response.json();
