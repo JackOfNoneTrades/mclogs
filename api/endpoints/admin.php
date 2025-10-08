@@ -15,11 +15,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 function checkAdminAuth() {
     $adminToken = getenv('ADMIN_TOKEN');
     
-    if (!$adminToken) {
+    if (!$adminToken || $adminToken === false) {
         http_response_code(503);
         echo json_encode([
             'success' => false,
-            'error' => 'Admin token not configured'
+            'error' => 'Admin token not configured in .env file'
         ]);
         exit;
     }
@@ -32,11 +32,29 @@ function checkAdminAuth() {
         $token = $_GET['token'];
     }
     
+    if (!$token) {
+        http_response_code(401);
+        echo json_encode([
+            'success' => false,
+            'error' => 'No token provided'
+        ]);
+        exit;
+    }
+    
+    // Trim both tokens to avoid whitespace issues
+    $adminToken = trim($adminToken);
+    $token = trim($token);
+    
     if ($token !== $adminToken) {
         http_response_code(401);
         echo json_encode([
             'success' => false,
-            'error' => 'Unauthorized'
+            'error' => 'Invalid token',
+            'debug' => [
+                'token_length' => strlen($token),
+                'expected_length' => strlen($adminToken),
+                'token_provided' => substr($token, 0, 3) . '...'
+            ]
         ]);
         exit;
     }
