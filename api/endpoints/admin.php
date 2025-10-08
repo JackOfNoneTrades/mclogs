@@ -30,13 +30,28 @@ function checkAdminAuth() {
         $token = str_replace('Bearer ', '', $_SERVER['HTTP_AUTHORIZATION']);
     } elseif (isset($_GET['token'])) {
         $token = $_GET['token'];
+    } else {
+        // Try parsing from REQUEST_URI if $_GET is not populated
+        $query = parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY);
+        if ($query) {
+            parse_str($query, $params);
+            if (isset($params['token'])) {
+                $token = $params['token'];
+            }
+        }
     }
     
     if (!$token) {
         http_response_code(401);
         echo json_encode([
             'success' => false,
-            'error' => 'No token provided'
+            'error' => 'No token provided',
+            'debug' => [
+                'get_available' => !empty($_GET),
+                'get_keys' => array_keys($_GET),
+                'request_uri' => $_SERVER['REQUEST_URI'],
+                'query_string' => $_SERVER['QUERY_STRING'] ?? 'not set'
+            ]
         ]);
         exit;
     }
