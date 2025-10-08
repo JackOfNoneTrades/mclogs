@@ -80,9 +80,9 @@ Deletes the specified log.
 - Displays size in bytes
 
 ### MongoDB Storage (`STORAGE_ID=m`)
-- ⚠️ Currently not implemented for the admin dashboard
+- ✅ Full support for listing and deleting logs
+- Displays creation timestamp and size
 - Default storage backend
-- Use filesystem or Redis if you need the admin dashboard
 
 ## Security Notes
 

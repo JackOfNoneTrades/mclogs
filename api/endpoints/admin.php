@@ -132,12 +132,21 @@ if (count($pathParts) == 2 && $pathParts[1] == 'logs') {
                 ];
             }
         } elseif ($storageId == 'm') {
-            // MongoDB storage - basic implementation
-            echo json_encode([
-                'success' => false,
-                'error' => 'MongoDB listing not implemented. Please use filesystem or Redis storage.'
-            ]);
-            exit;
+            // MongoDB storage
+            \Client\MongoDBClient::Connect();
+            $collection = \Client\MongoDBClient::getCollection();
+            
+            $cursor = $collection->find([], ['projection' => ['_id' => 1, 'time' => 1, 'content' => 1]]);
+            foreach ($cursor as $doc) {
+                $size = isset($doc['content']) ? strlen($doc['content']) : 0;
+                $created = isset($doc['time']) ? date('Y-m-d H:i:s', $doc['time']) : 'N/A';
+                
+                $logs[] = [
+                    'id' => (string)$doc['_id'],
+                    'size' => $size,
+                    'created' => $created
+                ];
+            }
         }
         
         // Sort by created date (newest first)
@@ -196,12 +205,12 @@ if (count($pathParts) == 3 && $pathParts[1] == 'delete') {
             
             $deleted = $redis->del($logId) > 0;
         } elseif ($storageId == 'm') {
-            // MongoDB storage - basic implementation
-            echo json_encode([
-                'success' => false,
-                'error' => 'MongoDB deletion not implemented. Please use filesystem or Redis storage.'
-            ]);
-            exit;
+            // MongoDB storage
+            \Client\MongoDBClient::Connect();
+            $collection = \Client\MongoDBClient::getCollection();
+            
+            $result = $collection->deleteOne(['_id' => $logId]);
+            $deleted = $result->getDeletedCount() > 0;
         }
         
         if ($deleted) {
