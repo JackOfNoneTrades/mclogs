@@ -288,6 +288,6 @@ $themeColor = $_ENV['PRIMARY_COLOR'] ?? '#2d3943';
                 <a target="_blank" href="<?=$legal['privacy']?>">Privacy</a>
             </div>
         </div>
-        <script src="js/logview.js?v=130221"></script>
+        <script src="js/viewer.js"></script>
     </body>
 </html>
