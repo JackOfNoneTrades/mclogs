@@ -132,14 +132,16 @@ if (count($pathParts) == 2 && $pathParts[1] == 'logs') {
                 ];
             }
         } elseif ($storageId == 'm') {
-            // MongoDB storage
-            \Client\MongoDBClient::Connect();
-            $collection = \Client\MongoDBClient::getCollection();
+            // MongoDB storage - access via reflection to get protected method
+            $mongoClass = new ReflectionClass('\Storage\Mongo');
+            $collectionMethod = $mongoClass->getMethod('getCollection');
+            $collectionMethod->setAccessible(true);
+            $collection = $collectionMethod->invoke(null);
             
-            $cursor = $collection->find([], ['projection' => ['_id' => 1, 'time' => 1, 'content' => 1]]);
+            $cursor = $collection->find([], ['projection' => ['_id' => 1, 'expires' => 1, 'data' => 1]]);
             foreach ($cursor as $doc) {
-                $size = isset($doc['content']) ? strlen($doc['content']) : 0;
-                $created = isset($doc['time']) ? date('Y-m-d H:i:s', $doc['time']) : 'N/A';
+                $size = isset($doc['data']) ? strlen($doc['data']) : 0;
+                $created = isset($doc['expires']) ? date('Y-m-d H:i:s', $doc['expires']->toDateTime()->getTimestamp()) : 'N/A';
                 
                 $logs[] = [
                     'id' => (string)$doc['_id'],
@@ -205,9 +207,11 @@ if (count($pathParts) == 3 && $pathParts[1] == 'delete') {
             
             $deleted = $redis->del($logId) > 0;
         } elseif ($storageId == 'm') {
-            // MongoDB storage
-            \Client\MongoDBClient::Connect();
-            $collection = \Client\MongoDBClient::getCollection();
+            // MongoDB storage - access via reflection to get protected method
+            $mongoClass = new ReflectionClass('\Storage\Mongo');
+            $collectionMethod = $mongoClass->getMethod('getCollection');
+            $collectionMethod->setAccessible(true);
+            $collection = $collectionMethod->invoke(null);
             
             $result = $collection->deleteOne(['_id' => $logId]);
             $deleted = $result->getDeletedCount() > 0;
