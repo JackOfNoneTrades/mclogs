@@ -143,19 +143,24 @@ if (count($pathParts) == 2 && $pathParts[1] == 'logs') {
                 $size = isset($doc->data) ? strlen($doc->data) : 0;
                 $created = isset($doc->expires) ? date('Y-m-d H:i:s', $doc->expires->toDateTime()->getTimestamp()) : 'N/A';
                 
-                // Explicitly handle _id
-                $id = $doc->_id;
-                // If it's an object, convert to string
-                if (is_object($id)) {
-                    $id = (string)$id;
-                }
+                // MongoDB stores raw IDs - reconstruct the full ID with storage prefix
+                $rawId = $doc->_id;
+                $idObj = new \Id();
+                $idObj->setStorage('m'); // MongoDB storage type
+                
+                // Use reflection to set the private rawId property
+                $idReflection = new ReflectionClass('\Id');
+                $rawIdProperty = $idReflection->getProperty('rawId');
+                $rawIdProperty->setAccessible(true);
+                $rawIdProperty->setValue($idObj, $rawId);
+                
+                // Get the full ID with encoded storage prefix
+                $fullId = $idObj->get();
                 
                 $logs[] = [
-                    'id' => $id,
+                    'id' => $fullId,
                     'size' => $size,
-                    'created' => $created,
-                    'debug_id_type' => gettype($doc->_id),
-                    'debug_id_class' => is_object($doc->_id) ? get_class($doc->_id) : 'not_object'
+                    'created' => $created
                 ];
             }
         }
@@ -216,13 +221,18 @@ if (count($pathParts) == 3 && $pathParts[1] == 'delete') {
             
             $deleted = $redis->del($logId) > 0;
         } elseif ($storageId == 'm') {
-            // MongoDB storage - access via reflection to get protected method
+            // MongoDB storage - convert full ID to raw ID
+            // The dashboard sends full IDs (e.g., "cJKJ6na") but MongoDB stores raw IDs (e.g., "JKJ6na")
+            $idObj = new \Id($logId);
+            $rawId = $idObj->getRaw();
+            
+            // Access MongoDB collection via reflection
             $mongoClass = new ReflectionClass('\Storage\Mongo');
             $collectionMethod = $mongoClass->getMethod('getCollection');
             $collectionMethod->setAccessible(true);
             $collection = $collectionMethod->invoke(null);
             
-            $result = $collection->deleteOne(['_id' => $logId]);
+            $result = $collection->deleteOne(['_id' => $rawId]);
             $deleted = $result->getDeletedCount() > 0;
         }
         

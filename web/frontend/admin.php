@@ -250,8 +250,6 @@ if (isset($_GET['logout'])) {
                     const data = await response.json();
                     
                     if (data.success) {
-                        console.log('Raw API response:', data);
-                        console.log('First log ID:', data.logs.length > 0 ? data.logs[0].id : 'no logs');
                         document.getElementById('total-logs').textContent = data.logs.length;
                         document.getElementById('storage-type').textContent = data.storage_type;
                         displayLogs(data.logs);
