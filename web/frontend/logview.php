@@ -216,12 +216,12 @@ $themeColor = $_ENV['PRIMARY_COLOR'] ?? '#2d3943';
                             $doc = $collection->findOne(['_id' => $id->getRaw()], ['projection' => ['no_reset_timer' => 1, 'expires' => 1]]);
                             if ($doc) {
                                 $resetsOnView = !isset($doc->no_reset_timer) || !$doc->no_reset_timer;
-                                // Calculate days from expires timestamp
+                                // Calculate remaining days until expiration
                                 if (isset($doc->expires)) {
                                     $expiresAt = $doc->expires->toDateTime()->getTimestamp();
-                                    $createdAt = $expiresAt - $storageConfig['storageTime'];
-                                    $customExpiry = $expiresAt - $createdAt;
-                                    $expiryDays = floor($customExpiry / 86400);
+                                    $now = time();
+                                    $remainingTime = $expiresAt - $now;
+                                    $expiryDays = max(0, floor($remainingTime / 86400));
                                 }
                             }
                         } catch (Exception $e) {
