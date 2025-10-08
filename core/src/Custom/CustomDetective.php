@@ -14,9 +14,9 @@ class CustomDetective extends BaseDetective
     /**
      * Detect the log type with custom logic
      * 
-     * @return \Aternos\Codex\Log\LogInterface
+     * @return MinecraftLog
      */
-    public function detect(): \Aternos\Codex\Log\LogInterface
+    public function detect(): MinecraftLog
     {
         // First, run the base detection
         $log = parent::detect();
