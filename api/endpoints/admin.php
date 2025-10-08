@@ -24,34 +24,17 @@ function checkAdminAuth() {
         exit;
     }
     
-    // Check for token in header or query parameter
+    // Check for token in Authorization header only (security: avoid URL logging)
     $token = null;
     if (isset($_SERVER['HTTP_AUTHORIZATION'])) {
         $token = str_replace('Bearer ', '', $_SERVER['HTTP_AUTHORIZATION']);
-    } elseif (isset($_GET['token'])) {
-        $token = $_GET['token'];
-    } else {
-        // Try parsing from REQUEST_URI if $_GET is not populated
-        $query = parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY);
-        if ($query) {
-            parse_str($query, $params);
-            if (isset($params['token'])) {
-                $token = $params['token'];
-            }
-        }
     }
     
     if (!$token) {
         http_response_code(401);
         echo json_encode([
             'success' => false,
-            'error' => 'No token provided',
-            'debug' => [
-                'get_available' => !empty($_GET),
-                'get_keys' => array_keys($_GET),
-                'request_uri' => $_SERVER['REQUEST_URI'],
-                'query_string' => $_SERVER['QUERY_STRING'] ?? 'not set'
-            ]
+            'error' => 'Unauthorized'
         ]);
         exit;
     }
@@ -60,16 +43,12 @@ function checkAdminAuth() {
     $adminToken = trim($adminToken);
     $token = trim($token);
     
-    if ($token !== $adminToken) {
+    // Use timing-safe comparison to prevent timing attacks
+    if (!hash_equals($adminToken, $token)) {
         http_response_code(401);
         echo json_encode([
             'success' => false,
-            'error' => 'Invalid token',
-            'debug' => [
-                'token_length' => strlen($token),
-                'expected_length' => strlen($adminToken),
-                'token_provided' => substr($token, 0, 3) . '...'
-            ]
+            'error' => 'Unauthorized'
         ]);
         exit;
     }

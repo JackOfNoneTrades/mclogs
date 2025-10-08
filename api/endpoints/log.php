@@ -20,6 +20,13 @@ if (empty($_POST['content'])) {
 
 $content = $_POST['content'];
 
+// Validate content is valid UTF-8
+if (!mb_check_encoding($content, 'UTF-8')) {
+    $out->error = "Content must be valid UTF-8 text.";
+    echo json_encode($out);
+    exit;
+}
+
 // Get expiration options
 $noResetTimer = isset($_POST['no_reset_timer']) && $_POST['no_reset_timer'] === '1';
 $expiryDays = isset($_POST['expiry_days']) ? intval($_POST['expiry_days']) : null;

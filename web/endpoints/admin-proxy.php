@@ -32,16 +32,19 @@ $query = parse_url($requestUri, PHP_URL_QUERY);
 // Extract the API path (everything after /admin-proxy/)
 $apiPath = str_replace('/admin-proxy/', '/admin/', $path);
 
-// Build the full API URL with token and preserve existing query parameters
-$apiUrl = $apiBaseUrl . $apiPath . '?token=' . urlencode($adminToken);
+// Build the full API URL with query parameters (no token in URL for security)
+$apiUrl = $apiBaseUrl . $apiPath;
 if ($query) {
-    $apiUrl .= '&' . $query;
+    $apiUrl .= '?' . $query;
 }
 
 // Forward the request to the API
 $ch = curl_init($apiUrl);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+
+// Set Authorization header with token
+$headers = ['Authorization: Bearer ' . $adminToken];
 
 // Forward the HTTP method
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -50,11 +53,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $postData = file_get_contents('php://input');
     if ($postData) {
         curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        $headers[] = 'Content-Type: application/json';
     }
 } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
 }
+
+// Set headers
+curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
 // Execute the request
 $response = curl_exec($ch);

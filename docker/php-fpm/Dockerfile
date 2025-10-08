@@ -20,6 +20,7 @@ COPY ../branding ./web/public/branding
 
 # Copy PHP config
 COPY docker/php-fpm/mclogs.ini /usr/local/etc/php/conf.d/mclogs.ini
+COPY docker/php-fpm/security.ini /usr/local/etc/php/conf.d/security.ini
 
 #RUN composer require vlucas/phpdotenv --no-interaction --no-scripts
 
