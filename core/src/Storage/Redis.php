@@ -12,9 +12,10 @@ class Redis extends RedisClient implements StorageInterface {
      * @param string $data
      * @param bool $noResetTimer Don't reset expiry timer on access (not applicable for Redis)
      * @param int|null $expiryDays Custom expiration time in days
+     * @param bool $encrypted Whether the log is encrypted
      * @return ?\Id ID or false
      */
-    public static function Put(string $data, bool $noResetTimer = false, ?int $expiryDays = null): ?\Id
+    public static function Put(string $data, bool $noResetTimer = false, ?int $expiryDays = null, bool $encrypted = false): ?\Id
     {
         $config = \Config::Get("storage");
         $id = new \Id();
@@ -36,6 +37,11 @@ class Redis extends RedisClient implements StorageInterface {
         // Store no_reset_timer flag if needed (as metadata key)
         if ($noResetTimer) {
             \Client\RedisClient::$connection->setEx($id->getRaw() . ':no_reset', $expiryTime, '1');
+        }
+        
+        // Store encrypted flag if needed
+        if ($encrypted) {
+            \Client\RedisClient::$connection->setEx($id->getRaw() . ':encrypted', $expiryTime, '1');
         }
 
         return $id;
@@ -73,5 +79,17 @@ class Redis extends RedisClient implements StorageInterface {
         $config = \Config::Get("storage");
         self::$connection->expire($id->getRaw(), $config['storageTime']);
         return true;
+    }
+    
+    /**
+     * Check if a log is encrypted
+     *
+     * @param \Id $id
+     * @return bool Whether the log is encrypted
+     */
+    public static function IsEncrypted(\Id $id): bool
+    {
+        self::Connect();
+        return self::$connection->exists($id->getRaw() . ':encrypted') > 0;
     }
 }

@@ -47,6 +47,61 @@ document.addEventListener('keydown', event => {
 })
 
 /**
+ * Encrypt log content using AES-GCM with PBKDF2 key derivation
+ * @param {string} text - The text to encrypt
+ * @param {string} password - The password to use
+ * @returns {Promise<string>} Base64 encoded encrypted data
+ */
+async function encryptLog(text, password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(text);
+    
+    // Generate salt
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    
+    // Derive key from password using PBKDF2
+    const keyMaterial = await crypto.subtle.importKey(
+        'raw',
+        encoder.encode(password),
+        'PBKDF2',
+        false,
+        ['deriveBits', 'deriveKey']
+    );
+    
+    const key = await crypto.subtle.deriveKey(
+        {
+            name: 'PBKDF2',
+            salt: salt,
+            iterations: 100000,
+            hash: 'SHA-256'
+        },
+        keyMaterial,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['encrypt']
+    );
+    
+    // Generate IV
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    
+    // Encrypt
+    const encrypted = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv: iv },
+        key,
+        data
+    );
+    
+    // Combine salt + iv + encrypted data
+    const result = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
+    result.set(salt, 0);
+    result.set(iv, salt.length);
+    result.set(new Uint8Array(encrypted), salt.length + iv.length);
+    
+    // Return as base64
+    return btoa(String.fromCharCode(...result));
+}
+
+/**
  * Save the log to the API
  * @returns {Promise<void>}
  */
@@ -65,6 +120,18 @@ async function sendLog() {
         // Get expiration options
         const noResetTimer = document.getElementById('no-reset-timer')?.checked || false;
         const expiryDays = document.getElementById('expiry-days')?.value || '';
+        const password = document.getElementById('log-password')?.value || '';
+        
+        // Encrypt if password provided
+        if (password) {
+            try {
+                log = await encryptLog(log, password);
+            } catch (e) {
+                console.error('Encryption failed:', e);
+                handleUploadError('Failed to encrypt log');
+                return;
+            }
+        }
         
         // Build request params
         const params = { content: log };
@@ -73,6 +140,9 @@ async function sendLog() {
         }
         if (expiryDays !== '' && parseInt(expiryDays) > 0) {
             params.expiry_days = expiryDays;
+        }
+        if (password) {
+            params.encrypted = '1';
         }
 
         const apiBase = window.MCLOGS_CONFIG?.apiBaseUrl || `${location.protocol}//api.${location.host}`;

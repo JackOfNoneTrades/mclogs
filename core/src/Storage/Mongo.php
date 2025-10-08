@@ -14,9 +14,10 @@ class Mongo extends \Client\MongoDBClient implements StorageInterface
      * @param string $data
      * @param bool $noResetTimer Don't reset expiry timer on access
      * @param int|null $expiryDays Custom expiration time in days
+     * @param bool $encrypted Whether the log is encrypted
      * @return ?\Id ID or false
      */
-    public static function Put(string $data, bool $noResetTimer = false, ?int $expiryDays = null): ?\Id
+    public static function Put(string $data, bool $noResetTimer = false, ?int $expiryDays = null, bool $encrypted = false): ?\Id
     {
         $config = \Config::Get("storage");
         $id = new \Id();
@@ -38,7 +39,8 @@ class Mongo extends \Client\MongoDBClient implements StorageInterface
             "_id" => $id->getRaw(),
             "expires" => $date,
             "data" => $data,
-            "no_reset_timer" => $noResetTimer
+            "no_reset_timer" => $noResetTimer,
+            "encrypted" => $encrypted
         ]);
 
         return $id;
@@ -83,5 +85,21 @@ class Mongo extends \Client\MongoDBClient implements StorageInterface
         self::getCollection()->updateOne(["_id" => $id->getRaw()], ['$set' => ['expires' => $date]]);
 
         return true;
+    }
+    
+    /**
+     * Check if a log is encrypted
+     *
+     * @param \Id $id
+     * @return bool Whether the log is encrypted
+     */
+    public static function IsEncrypted(\Id $id): bool
+    {
+        $result = self::getCollection()->findOne(
+            ["_id" => $id->getRaw()], 
+            ['projection' => ['encrypted' => 1]]
+        );
+        
+        return $result && isset($result->encrypted) && $result->encrypted;
     }
 }

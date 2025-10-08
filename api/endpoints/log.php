@@ -23,6 +23,7 @@ $content = $_POST['content'];
 // Get expiration options
 $noResetTimer = isset($_POST['no_reset_timer']) && $_POST['no_reset_timer'] === '1';
 $expiryDays = isset($_POST['expiry_days']) ? intval($_POST['expiry_days']) : null;
+$encrypted = isset($_POST['encrypted']) && $_POST['encrypted'] === '1';
 
 // Validate expiry_days doesn't exceed STORAGE_TIME
 if ($expiryDays !== null && $expiryDays > 0) {
@@ -36,7 +37,7 @@ if ($expiryDays !== null && $expiryDays > 0) {
 }
 
 $log = new Log();
-$id = $log->put($content, $noResetTimer, $expiryDays);
+$id = $log->put($content, $noResetTimer, $expiryDays, $encrypted);
 
 $urls = Config::Get('urls');
 

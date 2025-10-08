@@ -295,12 +295,17 @@ class Log
      * @param string $data
      * @param bool $noResetTimer Don't reset expiry timer on access
      * @param int|null $expiryDays Custom expiration time in days
+     * @param bool $encrypted Whether the log is encrypted
      * @return ?Id
      */
-    public function put(string $data, bool $noResetTimer = false, ?int $expiryDays = null): ?Id
+    public function put(string $data, bool $noResetTimer = false, ?int $expiryDays = null, bool $encrypted = false): ?Id
     {
         $this->data = $data;
-        $this->preFilter();
+        
+        // Skip pre-filtering for encrypted logs
+        if (!$encrypted) {
+            $this->preFilter();
+        }
 
         $config = Config::Get('storage');
 
@@ -309,7 +314,7 @@ class Log
          */
         $storage = $config['storages'][$config['storageId']]['class'];
 
-        $this->id = $storage::Put($this->data, $noResetTimer, $expiryDays);
+        $this->id = $storage::Put($this->data, $noResetTimer, $expiryDays, $encrypted);
         $this->exists = true;
 
         return $this->id;

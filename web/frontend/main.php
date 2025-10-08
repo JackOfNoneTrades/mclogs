@@ -99,6 +99,11 @@ $themeColor = $_ENV['PRIMARY_COLOR'] ?? '#2d3943';
                                 <input type="number" id="expiry-days" min="0" max="<?=floor($storage['storageTime'] / 86400)?>" placeholder="<?=floor($storage['storageTime'] / 86400)?>" style="width: 80px; padding: 5px; background: #1a1a1a; color: #e0e0e0; border: 1px solid #444; border-radius: 3px;">
                                 <span>days (max: <?=floor($storage['storageTime'] / 86400)?>)</span>
                             </label>
+                            <label style="display: flex; align-items: center; gap: 8px; color: var(--primary-color);">
+                                <i class="fa fa-lock"></i>
+                                <span>Password protect</span>
+                                <input type="password" id="log-password" placeholder="Optional" style="width: 150px; padding: 5px; background: #1a1a1a; color: #e0e0e0; border: 1px solid #444; border-radius: 3px;">
+                            </label>
                         </div>
                         <div class="paste-save btn btn-green btn-no-margin" style="display: flex;margin-left: 5%;height: fit-content;">
                             <i class="fa fa-save"></i> Save
