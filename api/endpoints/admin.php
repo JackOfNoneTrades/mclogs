@@ -600,8 +600,68 @@ if (count($pathParts) == 2 && $pathParts[1] == 'settings') {
         foreach ($lines as $line) {
             $trimmedLine = trim($line);
             
-            // Keep comments and empty lines as-is
-            if (empty($trimmedLine) || $trimmedLine[0] === '#') {
+            // Keep empty lines as-is
+            if (empty($trimmedLine)) {
+                $newLines[] = $line;
+                continue;
+            }
+            
+            // Handle commented lines (might be settings to uncomment)
+            if ($trimmedLine[0] === '#') {
+                $uncommentedLine = trim(substr($trimmedLine, 1));
+                
+                // Check if this is a commented setting
+                if (strpos($uncommentedLine, '=') !== false) {
+                    list($key, $oldValue) = explode('=', $uncommentedLine, 2);
+                    $key = trim($key);
+                    
+                    // Skip ADMIN_TOKEN
+                    if ($key === 'ADMIN_TOKEN') {
+                        $newLines[] = $line;
+                        continue;
+                    }
+                    
+                    // If we have a new value for this commented key, uncomment and update it
+                    if (isset($input[$key])) {
+                        $oldValue = trim($oldValue);
+                        $newValue = $input[$key];
+                        
+                        // Detect original quote style
+                        $useQuotes = false;
+                        $quoteChar = "'";
+                        if (strlen($oldValue) >= 2) {
+                            if ($oldValue[0] === '"' && substr($oldValue, -1) === '"') {
+                                $useQuotes = true;
+                                $quoteChar = '"';
+                            } elseif ($oldValue[0] === "'" && substr($oldValue, -1) === "'") {
+                                $useQuotes = true;
+                                $quoteChar = "'";
+                            }
+                        }
+                        
+                        // Decide if we need quotes
+                        if (!$useQuotes && (strpos($newValue, ' ') !== false || strpos($newValue, '#') !== false)) {
+                            $useQuotes = true;
+                            $quoteChar = "'";
+                        }
+                        
+                        // Apply quotes if needed
+                        if ($useQuotes) {
+                            $escapedValue = preg_replace('/(?<!\\\\)' . preg_quote($quoteChar, '/') . '/', '\\' . $quoteChar, $newValue);
+                            $newValue = $quoteChar . $escapedValue . $quoteChar;
+                        }
+                        
+                        // Uncomment and update
+                        $newLines[] = $key . '=' . $newValue;
+                        $updatedKeys[] = $key;
+                        
+                        // Update environment variable immediately
+                        putenv($key . '=' . $input[$key]);
+                        continue;
+                    }
+                }
+                
+                // Keep comment as-is if not updating
                 $newLines[] = $line;
                 continue;
             }
@@ -643,8 +703,9 @@ if (count($pathParts) == 2 && $pathParts[1] == 'settings') {
                     
                     // Apply quotes if needed
                     if ($useQuotes) {
-                        // Escape the quote character in the value
-                        $escapedValue = str_replace($quoteChar, '\\' . $quoteChar, $newValue);
+                        // Escape the quote character in the value, but only if not already escaped
+                        // Replace unescaped quotes
+                        $escapedValue = preg_replace('/(?<!\\\\)' . preg_quote($quoteChar, '/') . '/', '\\' . $quoteChar, $newValue);
                         $newValue = $quoteChar . $escapedValue . $quoteChar;
                     }
                     
