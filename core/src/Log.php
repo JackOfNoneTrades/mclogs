@@ -5,7 +5,7 @@ use Aternos\Codex\Analysis\Information;
 use Aternos\Codex\Log\File\StringLogFile;
 use Aternos\Codex\Log\Level;
 use Aternos\Codex\Minecraft\Analysis\Information\Vanilla\VanillaVersionInformation;
-use Aternos\Codex\Minecraft\Detective\Detective;
+use Custom\CustomDetective;
 use Aternos\Codex\Minecraft\Log\Minecraft\MinecraftLog;
 use Aternos\Codex\Minecraft\Log\Minecraft\Vanilla\Fabric\FabricLog;
 use Aternos\Codex\Minecraft\Log\Minecraft\Vanilla\VanillaClientLog;
@@ -97,7 +97,7 @@ class Log
      */
     public function analyse(): Analysis
     {
-        $this->log = (new Detective())->setLogFile(new StringLogFile($this->data))->detect();
+        $this->log = (new CustomDetective())->setLogFile(new StringLogFile($this->data))->detect();
         $this->log->parse();
         $this->analysis = $this->log->analyse();
         $this->deobfuscateContent();
@@ -201,7 +201,7 @@ class Log
         $this->obfuscatedContent = new ObfuscatedString($this->data, $map);
         if ($content = $this->obfuscatedContent->getMappedContent()) {
             $this->data = $content;
-            $this->log = (new Detective())->setLogFile(new StringLogFile($this->data))->detect();
+            $this->log = (new CustomDetective())->setLogFile(new StringLogFile($this->data))->detect();
             $this->log->parse();
         }
     }
