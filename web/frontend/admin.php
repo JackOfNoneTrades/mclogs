@@ -264,6 +264,12 @@ if (isset($_GET['logout'])) {
                 }
             }
 
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
             function displayLogs(logs) {
                 if (logs.length === 0) {
                     document.getElementById('logs-container').innerHTML = 
@@ -276,13 +282,18 @@ if (isset($_GET['logout'])) {
                 html += '</tr></thead><tbody>';
 
                 logs.forEach(log => {
+                    const logId = String(log.id);
+                    const escapedId = escapeHtml(logId);
+                    const escapedCreated = escapeHtml(log.created || 'N/A');
+                    const jsEscapedId = logId.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                    
                     html += '<tr>';
-                    html += '<td><code>' + log.id + '</code></td>';
-                    html += '<td>' + (log.created || 'N/A') + '</td>';
+                    html += '<td><code>' + escapedId + '</code></td>';
+                    html += '<td>' + escapedCreated + '</td>';
                     html += '<td>' + formatBytes(log.size || 0) + '</td>';
                     html += '<td>';
-                    html += '<a href="/' + log.id + '" target="_blank" class="view-btn">View</a> ';
-                    html += '<button class="delete-btn" onclick="deleteLog(\'' + log.id + '\')">Delete</button>';
+                    html += '<a href="/' + encodeURIComponent(logId) + '" target="_blank" class="view-btn">View</a> ';
+                    html += '<button class="delete-btn" onclick="deleteLog(\'' + jsEscapedId + '\')">Delete</button>';
                     html += '</td>';
                     html += '</tr>';
                 });
