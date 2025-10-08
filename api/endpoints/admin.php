@@ -140,11 +140,11 @@ if (count($pathParts) == 2 && $pathParts[1] == 'logs') {
             
             $cursor = $collection->find([], ['projection' => ['_id' => 1, 'expires' => 1, 'data' => 1]]);
             foreach ($cursor as $doc) {
-                $size = isset($doc['data']) ? strlen($doc['data']) : 0;
-                $created = isset($doc['expires']) ? date('Y-m-d H:i:s', $doc['expires']->toDateTime()->getTimestamp()) : 'N/A';
+                $size = isset($doc->data) ? strlen($doc->data) : 0;
+                $created = isset($doc->expires) ? date('Y-m-d H:i:s', $doc->expires->toDateTime()->getTimestamp()) : 'N/A';
                 
                 $logs[] = [
-                    'id' => (string)$doc['_id'],
+                    'id' => $doc->_id,
                     'size' => $size,
                     'created' => $created
                 ];
