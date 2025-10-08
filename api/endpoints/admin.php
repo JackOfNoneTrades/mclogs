@@ -89,10 +89,17 @@ $pathParts = explode('/', trim($path, '/'));
 if (count($pathParts) == 2 && $pathParts[1] == 'logs') {
     checkAdminAuth();
     
+    // Parse query parameters from REQUEST_URI since $_GET may not be populated
+    $queryString = parse_url($_SERVER['REQUEST_URI'], PHP_URL_QUERY);
+    $queryParams = [];
+    if ($queryString) {
+        parse_str($queryString, $queryParams);
+    }
+    
     // Get pagination and sorting parameters
-    $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-    $sortBy = isset($_GET['sort_by']) ? $_GET['sort_by'] : 'created'; // created, size, id
-    $sortOrder = isset($_GET['sort_order']) && $_GET['sort_order'] === 'asc' ? 'asc' : 'desc';
+    $page = isset($queryParams['page']) ? max(1, intval($queryParams['page'])) : 1;
+    $sortBy = isset($queryParams['sort_by']) ? $queryParams['sort_by'] : 'created'; // created, size, id
+    $sortOrder = isset($queryParams['sort_order']) && $queryParams['sort_order'] === 'asc' ? 'asc' : 'desc';
     $maxLogsPerPage = getenv('MAX_LOGS_PAGE') ? intval(getenv('MAX_LOGS_PAGE')) : 50;
     
     $logs = [];
