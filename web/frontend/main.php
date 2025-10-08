@@ -88,19 +88,19 @@ $themeColor = $_ENV['PRIMARY_COLOR'] ?? '#2d3943';
                     <div id="dropzone" class="paste-body">
                         <textarea id="paste" autocomplete="off" spellcheck="false" data-max-length="<?=$storage['maxLength']?>" data-max-lines="<?=$storage['maxLines']?>"></textarea>
                     </div>
-                    <div class="paste-footer">
-                        <div class="paste-options" style="display: flex; gap: 20px; align-items: center; margin-bottom: 15px;">
+                    <div class="paste-footer" style="display: flex;align-items: center;">
+                        <div class="paste-options" style="display: flex; gap: 20px; align-items: center; margin-bottom: 15px; justify-content: space-between; width: 100%;">
                             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                                 <input type="checkbox" id="no-reset-timer" style="cursor: pointer;">
-                                <span>Don't reset delete timer on access</span>
+                                <span style="color: var(--primary-color);">Don't reset delete timer on access</span>
                             </label>
-                            <label style="display: flex; align-items: center; gap: 8px;">
+                            <label style="display: flex; align-items: center; gap: 8px; color: var(--primary-color);">
                                 <span>Delete after</span>
                                 <input type="number" id="expiry-days" min="0" max="<?=floor($storage['storageTime'] / 86400)?>" placeholder="<?=floor($storage['storageTime'] / 86400)?>" style="width: 80px; padding: 5px; background: #1a1a1a; color: #e0e0e0; border: 1px solid #444; border-radius: 3px;">
                                 <span>days (max: <?=floor($storage['storageTime'] / 86400)?>)</span>
                             </label>
                         </div>
-                        <div class="paste-save btn btn-green btn-no-margin">
+                        <div class="paste-save btn btn-green btn-no-margin" style="display: flex;margin-left: 5%;height: fit-content;">
                             <i class="fa fa-save"></i> Save
                         </div>
                     </div>
