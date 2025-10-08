@@ -193,6 +193,44 @@ if (!$authenticated && isset($_POST['admin_token'])) {
             border-radius: 5px;
             margin-bottom: 20px;
         }
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+        .sortable:hover {
+            background-color: #444;
+        }
+        .sort-indicator {
+            margin-left: 5px;
+            font-size: 10px;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 20px;
+        }
+        .pagination button {
+            background-color: #3a87c7;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .pagination button:hover:not(:disabled) {
+            background-color: #2a6aa7;
+        }
+        .pagination button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .pagination .page-info {
+            color: #999;
+        }
     </style>
 </head>
 <body>
@@ -239,17 +277,29 @@ if (!$authenticated && isset($_POST['admin_token'])) {
         </div>
 
         <script>
+            // Pagination and sorting state
+            let currentPage = 1;
+            let sortBy = 'created';
+            let sortOrder = 'desc';
+            
             // Use local proxy instead of direct API calls to keep token secure
-            async function loadLogs() {
+            async function loadLogs(page = 1) {
+                currentPage = page;
                 document.getElementById('status').textContent = 'Loading...';
                 try {
-                    const response = await fetch('/admin-proxy/logs');
+                    const params = new URLSearchParams({
+                        page: currentPage,
+                        sort_by: sortBy,
+                        sort_order: sortOrder
+                    });
+                    const response = await fetch('/admin-proxy/logs?' + params.toString());
                     const data = await response.json();
                     
                     if (data.success) {
-                        document.getElementById('total-logs').textContent = data.logs.length;
+                        document.getElementById('total-logs').textContent = data.pagination.total_logs;
                         document.getElementById('storage-type').textContent = data.storage_type;
                         displayLogs(data.logs);
+                        displayPagination(data.pagination);
                         document.getElementById('status').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
                     } else {
                         document.getElementById('logs-container').innerHTML = 
@@ -267,6 +317,21 @@ if (!$authenticated && isset($_POST['admin_token'])) {
                 return div.innerHTML;
             }
 
+            function toggleSort(column) {
+                if (sortBy === column) {
+                    sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+                } else {
+                    sortBy = column;
+                    sortOrder = 'desc';
+                }
+                loadLogs(currentPage);
+            }
+
+            function getSortIndicator(column) {
+                if (sortBy !== column) return '';
+                return sortOrder === 'asc' ? '▲' : '▼';
+            }
+
             function displayLogs(logs) {
                 if (logs.length === 0) {
                     document.getElementById('logs-container').innerHTML = 
@@ -275,7 +340,10 @@ if (!$authenticated && isset($_POST['admin_token'])) {
                 }
 
                 let html = '<table class="logs-table"><thead><tr>';
-                html += '<th>ID</th><th>Created</th><th>Size</th><th>Actions</th>';
+                html += '<th class="sortable" onclick="toggleSort(\'id\')">ID<span class="sort-indicator">' + getSortIndicator('id') + '</span></th>';
+                html += '<th class="sortable" onclick="toggleSort(\'created\')">Created<span class="sort-indicator">' + getSortIndicator('created') + '</span></th>';
+                html += '<th class="sortable" onclick="toggleSort(\'size\')">Size<span class="sort-indicator">' + getSortIndicator('size') + '</span></th>';
+                html += '<th>Actions</th>';
                 html += '</tr></thead><tbody>';
 
                 logs.forEach(log => {
@@ -318,6 +386,27 @@ if (!$authenticated && isset($_POST['admin_token'])) {
                 } catch (error) {
                     alert('Error deleting log: ' + error.message);
                 }
+            }
+
+            function displayPagination(pagination) {
+                if (pagination.total_pages <= 1) return;
+                
+                let html = '<div class="pagination">';
+                
+                // First and Previous buttons
+                html += '<button onclick="loadLogs(1)" ' + (pagination.current_page === 1 ? 'disabled' : '') + '>First</button>';
+                html += '<button onclick="loadLogs(' + (pagination.current_page - 1) + ')" ' + (pagination.current_page === 1 ? 'disabled' : '') + '>Previous</button>';
+                
+                // Page info
+                html += '<span class="page-info">Page ' + pagination.current_page + ' of ' + pagination.total_pages + ' (' + pagination.total_logs + ' logs)</span>';
+                
+                // Next and Last buttons
+                html += '<button onclick="loadLogs(' + (pagination.current_page + 1) + ')" ' + (pagination.current_page === pagination.total_pages ? 'disabled' : '') + '>Next</button>';
+                html += '<button onclick="loadLogs(' + pagination.total_pages + ')" ' + (pagination.current_page === pagination.total_pages ? 'disabled' : '') + '>Last</button>';
+                
+                html += '</div>';
+                
+                document.getElementById('logs-container').innerHTML += html;
             }
 
             function formatBytes(bytes) {

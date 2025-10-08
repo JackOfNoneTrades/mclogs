@@ -27,12 +27,16 @@ $apiBaseUrl = $config["apiBaseUrl"];
 // Parse the request
 $requestUri = $_SERVER['REQUEST_URI'];
 $path = parse_url($requestUri, PHP_URL_PATH);
+$query = parse_url($requestUri, PHP_URL_QUERY);
 
 // Extract the API path (everything after /admin-proxy/)
 $apiPath = str_replace('/admin-proxy/', '/admin/', $path);
 
-// Build the full API URL with token
+// Build the full API URL with token and preserve existing query parameters
 $apiUrl = $apiBaseUrl . $apiPath . '?token=' . urlencode($adminToken);
+if ($query) {
+    $apiUrl .= '&' . $query;
+}
 
 // Forward the request to the API
 $ch = curl_init($apiUrl);

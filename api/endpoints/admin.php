@@ -89,6 +89,12 @@ $pathParts = explode('/', trim($path, '/'));
 if (count($pathParts) == 2 && $pathParts[1] == 'logs') {
     checkAdminAuth();
     
+    // Get pagination and sorting parameters
+    $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+    $sortBy = isset($_GET['sort_by']) ? $_GET['sort_by'] : 'created'; // created, size, id
+    $sortOrder = isset($_GET['sort_order']) && $_GET['sort_order'] === 'asc' ? 'asc' : 'desc';
+    $maxLogsPerPage = getenv('MAX_LOGS_PAGE') ? intval(getenv('MAX_LOGS_PAGE')) : 50;
+    
     $logs = [];
     
     try {
@@ -165,17 +171,50 @@ if (count($pathParts) == 2 && $pathParts[1] == 'logs') {
             }
         }
         
-        // Sort by created date (newest first)
-        usort($logs, function($a, $b) {
-            if (!isset($a['created']) || !isset($b['created'])) return 0;
-            return strtotime($b['created']) - strtotime($a['created']);
+        // Apply sorting
+        usort($logs, function($a, $b) use ($sortBy, $sortOrder) {
+            $valA = $a[$sortBy] ?? '';
+            $valB = $b[$sortBy] ?? '';
+            
+            if ($sortBy === 'created') {
+                // Handle date sorting
+                if ($valA === 'N/A') $valA = 0;
+                else $valA = strtotime($valA);
+                if ($valB === 'N/A') $valB = 0;
+                else $valB = strtotime($valB);
+            } elseif ($sortBy === 'size') {
+                // Numeric sorting
+                $valA = intval($valA);
+                $valB = intval($valB);
+            }
+            // else: string sorting for 'id'
+            
+            $comparison = ($valA <=> $valB);
+            return $sortOrder === 'asc' ? $comparison : -$comparison;
         });
+        
+        // Get total count before pagination
+        $totalLogs = count($logs);
+        $totalPages = ceil($totalLogs / $maxLogsPerPage);
+        
+        // Apply pagination
+        $offset = ($page - 1) * $maxLogsPerPage;
+        $logs = array_slice($logs, $offset, $maxLogsPerPage);
         
         echo json_encode([
             'success' => true,
             'logs' => $logs,
             'storage_type' => $storageConfig['name'],
-            'count' => count($logs)
+            'pagination' => [
+                'current_page' => $page,
+                'total_pages' => $totalPages,
+                'total_logs' => $totalLogs,
+                'per_page' => $maxLogsPerPage
+            ],
+            'sorting' => [
+                'sort_by' => $sortBy,
+                'sort_order' => $sortOrder
+            ]
         ]);
     } catch (Exception $e) {
         http_response_code(500);
