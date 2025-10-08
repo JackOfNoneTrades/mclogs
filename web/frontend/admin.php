@@ -7,6 +7,7 @@ if (!$authenticated && isset($_POST['admin_token'])) {
     $adminToken = getenv('ADMIN_TOKEN');
     if ($adminToken && $_POST['admin_token'] === $adminToken) {
         $_SESSION['admin_authenticated'] = true;
+        $_SESSION['admin_token'] = $_POST['admin_token'];
         $authenticated = true;
     }
 }
@@ -240,11 +241,12 @@ if (isset($_GET['logout'])) {
 
         <script>
             const apiBaseUrl = '<?php echo $config["apiBaseUrl"]; ?>';
+            const adminToken = '<?php echo isset($_SESSION['admin_token']) ? $_SESSION['admin_token'] : ''; ?>';
 
             async function loadLogs() {
                 document.getElementById('status').textContent = 'Loading...';
                 try {
-                    const response = await fetch(apiBaseUrl + '/admin/logs');
+                    const response = await fetch(apiBaseUrl + '/admin/logs?token=' + encodeURIComponent(adminToken));
                     const data = await response.json();
                     
                     if (data.success) {
@@ -295,7 +297,7 @@ if (isset($_GET['logout'])) {
                 }
 
                 try {
-                    const response = await fetch(apiBaseUrl + '/admin/delete/' + logId, {
+                    const response = await fetch(apiBaseUrl + '/admin/delete/' + logId + '?token=' + encodeURIComponent(adminToken), {
                         method: 'POST'
                     });
                     const data = await response.json();
