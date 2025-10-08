@@ -1,24 +1,8 @@
 <?php
-// Handle logout FIRST, before any other logic
-session_start();
-if (isset($_GET['logout'])) {
-    // Clear all session variables
-    $_SESSION = array();
-    
-    // Destroy the session cookie
-    if (isset($_COOKIE[session_name()])) {
-        setcookie(session_name(), '', time()-3600, '/');
-    }
-    
-    // Destroy the session
-    session_destroy();
-    
-    // Redirect to admin page (must exit immediately)
-    header('Location: /admin');
-    exit();
-}
+// Logout is handled in web/public/index.php router before any output
 
-// Check authentication
+// Start session and check authentication
+session_start();
 $authenticated = isset($_SESSION['admin_authenticated']) && $_SESSION['admin_authenticated'] === true;
 
 if (!$authenticated && isset($_POST['admin_token'])) {
