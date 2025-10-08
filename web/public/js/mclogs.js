@@ -97,11 +97,12 @@ async function encryptLog(text, password) {
     result.set(iv, salt.length);
     result.set(new Uint8Array(encrypted), salt.length + iv.length);
     
-    // Return as base64 - avoid spread operator to prevent RangeError on large arrays
+    // Return as base64 - use chunk processing for efficiency
+    const chunkSize = 0x8000; // Process 32KB at a time
     let binary = '';
-    const len = result.length;
-    for (let i = 0; i < len; i++) {
-        binary += String.fromCharCode(result[i]);
+    for (let i = 0; i < result.length; i += chunkSize) {
+        const chunk = result.subarray(i, Math.min(i + chunkSize, result.length));
+        binary += String.fromCharCode.apply(null, chunk);
     }
     return btoa(binary);
 }
