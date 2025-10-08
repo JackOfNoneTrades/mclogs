@@ -596,7 +596,9 @@ if (count($pathParts) == 2 && $pathParts[1] == 'settings') {
             http_response_code(500);
             echo json_encode([
                 'success' => false,
-                'error' => 'Failed to write .env file'
+                'error' => 'Failed to write .env file - Permission denied',
+                'help' => 'Run: chmod 666 ' . $envPath . ' to make the file writable',
+                'path' => $envPath
             ]);
             exit;
         }
