@@ -304,6 +304,175 @@ if (count($pathParts) == 3 && $pathParts[1] == 'delete') {
     exit;
 }
 
+// Bulk delete logs
+if (count($pathParts) == 2 && $pathParts[1] == 'bulk-delete') {
+    checkAdminAuth();
+    
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Method not allowed'
+        ]);
+        exit;
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    $ids = $input['ids'] ?? [];
+    
+    if (empty($ids)) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'No log IDs provided'
+        ]);
+        exit;
+    }
+    
+    try {
+        $deletedCount = 0;
+        
+        foreach ($ids as $logId) {
+            $deleted = false;
+            
+            if ($storageId == 'f') {
+                // Filesystem storage
+                $fsConfig = Config::Get('filesystem');
+                $basePath = CORE_PATH . $fsConfig['path'];
+                $filePath = $basePath . $logId;
+                
+                if (file_exists($filePath)) {
+                    $deleted = unlink($filePath);
+                }
+            } elseif ($storageId == 'r') {
+                // Redis storage
+                \Client\RedisClient::Connect();
+                $redis = \Client\RedisClient::$connection;
+                
+                $deleted = $redis->del($logId) > 0;
+            } elseif ($storageId == 'm') {
+                // MongoDB storage
+                $idObj = new \Id($logId);
+                $rawId = $idObj->getRaw();
+                
+                $mongoClass = new ReflectionClass('\Storage\Mongo');
+                $collectionMethod = $mongoClass->getMethod('getCollection');
+                $collectionMethod->setAccessible(true);
+                $collection = $collectionMethod->invoke(null);
+                
+                $result = $collection->deleteOne(['_id' => $rawId]);
+                $deleted = $result->getDeletedCount() > 0;
+            }
+            
+            if ($deleted) {
+                $deletedCount++;
+            }
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'deleted_count' => $deletedCount,
+            'total_requested' => count($ids)
+        ]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Failed to delete logs: ' . $e->getMessage()
+        ]);
+    }
+    exit;
+}
+
+// Delete logs before a certain date
+if (count($pathParts) == 2 && $pathParts[1] == 'delete-before') {
+    checkAdminAuth();
+    
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Method not allowed'
+        ]);
+        exit;
+    }
+    
+    $input = json_decode(file_get_contents('php://input'), true);
+    $date = $input['date'] ?? null;
+    
+    if (!$date) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'No date provided'
+        ]);
+        exit;
+    }
+    
+    $cutoffTimestamp = strtotime($date . ' 23:59:59');
+    
+    try {
+        $deletedCount = 0;
+        
+        if ($storageId == 'f') {
+            // Filesystem storage
+            $fsConfig = Config::Get('filesystem');
+            $basePath = CORE_PATH . $fsConfig['path'];
+            
+            if (is_dir($basePath)) {
+                $files = scandir($basePath);
+                foreach ($files as $file) {
+                    if ($file == '.' || $file == '..' || $file == '.gitignore') {
+                        continue;
+                    }
+                    
+                    $filePath = $basePath . $file;
+                    if (is_file($filePath)) {
+                        $fileTime = filemtime($filePath);
+                        if ($fileTime < $cutoffTimestamp) {
+                            if (unlink($filePath)) {
+                                $deletedCount++;
+                            }
+                        }
+                    }
+                }
+            }
+        } elseif ($storageId == 'r') {
+            // Redis storage - note: Redis doesn't have creation time, can't implement properly
+            echo json_encode([
+                'success' => false,
+                'error' => 'Date-based deletion not supported for Redis storage'
+            ]);
+            exit;
+        } elseif ($storageId == 'm') {
+            // MongoDB storage
+            $mongoClass = new ReflectionClass('\Storage\Mongo');
+            $collectionMethod = $mongoClass->getMethod('getCollection');
+            $collectionMethod->setAccessible(true);
+            $collection = $collectionMethod->invoke(null);
+            
+            // MongoDB stores expiry time, we need to find logs that were created before the cutoff
+            // Assuming expires = created + storage time
+            $storageConfig = Config::Get('storage');
+            $storageTime = $storageConfig['storageTime'];
+            $cutoffExpires = new \MongoDB\BSON\UTCDateTime(($cutoffTimestamp + $storageTime) * 1000);
+            
+            $result = $collection->deleteMany(['expires' => ['$lt' => $cutoffExpires]]);
+            $deletedCount = $result->getDeletedCount();
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'deleted_count' => $deletedCount
+        ]);
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Failed to delete logs: ' . $e->getMessage()
+        ]);
+    }
+    exit;
+}
+
 // Invalid endpoint
 http_response_code(404);
 echo json_encode([
