@@ -151,15 +151,17 @@ if (count($pathParts) == 2 && $pathParts[1] == 'logs') {
             $collectionMethod->setAccessible(true);
             $collection = $collectionMethod->invoke(null);
             
-            $cursor = $collection->find([], ['projection' => ['_id' => 1, 'expires' => 1, 'data' => 1]]);
+            $cursor = $collection->find([], ['projection' => ['_id' => 1, 'expires' => 1, 'data' => 1, 'no_reset_timer' => 1]]);
             foreach ($cursor as $doc) {
                 $size = isset($doc->data) ? strlen($doc->data) : 0;
-                $created = isset($doc->expires) ? date('Y-m-d H:i:s', $doc->expires->toDateTime()->getTimestamp()) : 'N/A';
+                $expiresTimestamp = isset($doc->expires) ? $doc->expires->toDateTime()->getTimestamp() : null;
+                $created = $expiresTimestamp ? date('Y-m-d H:i:s', $expiresTimestamp) : 'N/A';
+                $noResetTimer = isset($doc->no_reset_timer) ? $doc->no_reset_timer : false;
                 
                 // MongoDB stores raw IDs - reconstruct the full ID with storage prefix
                 $rawId = $doc->_id;
                 $idObj = new \Id();
-                $idObj->setStorage('m'); // MongoDB storage type
+                $idObj->setStorage('m');
                 
                 // Use reflection to set the private rawId property
                 $idReflection = new ReflectionClass('\Id');
@@ -173,7 +175,9 @@ if (count($pathParts) == 2 && $pathParts[1] == 'logs') {
                 $logs[] = [
                     'id' => $fullId,
                     'size' => $size,
-                    'created' => $created
+                    'created' => $created,
+                    'expires' => $expiresTimestamp ? date('Y-m-d H:i:s', $expiresTimestamp) : 'N/A',
+                    'resets' => !$noResetTimer
                 ];
             }
         }

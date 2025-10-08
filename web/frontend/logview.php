@@ -197,7 +197,75 @@ $themeColor = $_ENV['PRIMARY_COLOR'] ?? '#2d3943';
                     </div>
                 </div>
                 <div class="log-notice">
-                    This log will be saved for 90 days from their last view.<br />
+                    <?php
+                    // Get expiration information
+                    $storageConfig = Config::Get('storage');
+                    $defaultDays = floor($storageConfig['storageTime'] / 86400);
+                    $expiryDays = $defaultDays;
+                    $resetsOnView = true;
+                    
+                    // Check storage backend for expiration metadata
+                    if ($id->getStorage() == 'm') {
+                        // MongoDB
+                        try {
+                            $mongoClass = new ReflectionClass('\Storage\Mongo');
+                            $collectionMethod = $mongoClass->getMethod('getCollection');
+                            $collectionMethod->setAccessible(true);
+                            $collection = $collectionMethod->invoke(null);
+                            
+                            $doc = $collection->findOne(['_id' => $id->getRaw()], ['projection' => ['no_reset_timer' => 1, 'expires' => 1]]);
+                            if ($doc) {
+                                $resetsOnView = !isset($doc->no_reset_timer) || !$doc->no_reset_timer;
+                                // Calculate days from expires timestamp
+                                if (isset($doc->expires)) {
+                                    $expiresAt = $doc->expires->toDateTime()->getTimestamp();
+                                    $createdAt = $expiresAt - $storageConfig['storageTime'];
+                                    $customExpiry = $expiresAt - $createdAt;
+                                    $expiryDays = floor($customExpiry / 86400);
+                                }
+                            }
+                        } catch (Exception $e) {
+                            // Use defaults
+                        }
+                    } elseif ($id->getStorage() == 'r') {
+                        // Redis
+                        try {
+                            \Client\RedisClient::Connect();
+                            $redis = \Client\RedisClient::$connection;
+                            $resetsOnView = !$redis->exists($id->getRaw() . ':no_reset');
+                            // Get TTL for current expiry
+                            $ttl = $redis->ttl($id->getRaw());
+                            if ($ttl > 0) {
+                                $expiryDays = floor($ttl / 86400);
+                            }
+                        } catch (Exception $e) {
+                            // Use defaults
+                        }
+                    } elseif ($id->getStorage() == 'f') {
+                        // Filesystem
+                        $fsConfig = Config::Get('filesystem');
+                        $basePath = CORE_PATH . $fsConfig['path'];
+                        $metaFile = $basePath . $id->getRaw() . '.meta';
+                        
+                        if (file_exists($metaFile)) {
+                            $metadata = json_decode(file_get_contents($metaFile), true);
+                            if (isset($metadata['no_reset_timer'])) {
+                                $resetsOnView = !$metadata['no_reset_timer'];
+                            }
+                            if (isset($metadata['expiry_days'])) {
+                                $expiryDays = $metadata['expiry_days'];
+                            }
+                        }
+                    }
+                    
+                    $message = "This log will be saved for " . $expiryDays . " " . ($expiryDays == 1 ? "day" : "days");
+                    if ($resetsOnView) {
+                        $message .= " from their last view";
+                    }
+                    $message .= ".";
+                    
+                    echo $message;
+                    ?><br />
                     <a href="mailto:<?=$legal['abuseEmail']?>?subject=Report%20mclo.gs/<?=$id->get(); ?>">Report abuse</a>
                 </div>
                 <?php else: ?>
