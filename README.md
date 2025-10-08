@@ -15,8 +15,13 @@ This is an [Aternos mclo.gs](https://github.com/aternosorg/mclogs) fork.
 * Different storage backends (mongodb, redis, filesystem)
 
 ## New Features
+* Admin dashboard (available at `mclogs.mysite.com/admin`)
+* Log retention time customisable by users
+* Optional password protected logs (encrypted and decrypted on the client)
+* Privacy filters (game tokens, IP addresses, home directory names) are now applied in the browser, before the log even leaves it
 * Docker compose actually working
 * Most things can be configured with the .env file
+* Automatic paste deletion actually working on MongoDB
 
 ## Development setup
 * Install Docker Compose: https://docs.docker.com/compose/install/
@@ -48,6 +53,8 @@ server {
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384';
 
+    client_max_body_size 10m;
+
     location / {
         proxy_pass http://127.0.0.1:8082;
         include proxy_params;
@@ -75,6 +82,8 @@ server {
 
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384';
+
+    client_max_body_size 10m;
 
     location / {
         proxy_pass http://127.0.0.1:8083;
