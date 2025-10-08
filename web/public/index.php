@@ -42,6 +42,9 @@ switch ($uri) {
     case "/admin":
         require_once("../frontend/admin.php");
         break;
+    case "/admin/settings":
+        require_once("../frontend/settings.php");
+        break;
     default:
         require_once("../frontend/logview.php");
         break;

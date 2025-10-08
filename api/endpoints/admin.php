@@ -473,6 +473,148 @@ if (count($pathParts) == 2 && $pathParts[1] == 'delete-before') {
     exit;
 }
 
+// Get settings
+if (count($pathParts) == 2 && $pathParts[1] == 'settings') {
+    checkAdminAuth();
+    
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        // Read .env file
+        $envPath = CORE_PATH . '/../.env';
+        if (!file_exists($envPath)) {
+            http_response_code(404);
+            echo json_encode([
+                'success' => false,
+                'error' => '.env file not found'
+            ]);
+            exit;
+        }
+        
+        $envContent = file_get_contents($envPath);
+        $lines = explode("\n", $envContent);
+        $settings = [];
+        
+        foreach ($lines as $line) {
+            $line = trim($line);
+            // Skip comments and empty lines
+            if (empty($line) || $line[0] === '#') {
+                continue;
+            }
+            
+            // Parse KEY=VALUE
+            if (strpos($line, '=') !== false) {
+                list($key, $value) = explode('=', $line, 2);
+                $key = trim($key);
+                $value = trim($value);
+                
+                // Skip ADMIN_TOKEN for security
+                if ($key === 'ADMIN_TOKEN') {
+                    continue;
+                }
+                
+                // Remove quotes if present
+                if ((substr($value, 0, 1) === '"' && substr($value, -1) === '"') ||
+                    (substr($value, 0, 1) === "'" && substr($value, -1) === "'")) {
+                    $value = substr($value, 1, -1);
+                }
+                
+                $settings[$key] = $value;
+            }
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'settings' => $settings
+        ]);
+    } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        // Save settings
+        $input = json_decode(file_get_contents('php://input'), true);
+        
+        if (empty($input)) {
+            echo json_encode([
+                'success' => false,
+                'error' => 'No settings provided'
+            ]);
+            exit;
+        }
+        
+        $envPath = CORE_PATH . '/../.env';
+        if (!file_exists($envPath)) {
+            http_response_code(404);
+            echo json_encode([
+                'success' => false,
+                'error' => '.env file not found'
+            ]);
+            exit;
+        }
+        
+        // Read existing .env
+        $envContent = file_get_contents($envPath);
+        $lines = explode("\n", $envContent);
+        $newLines = [];
+        $updatedKeys = [];
+        
+        foreach ($lines as $line) {
+            $trimmedLine = trim($line);
+            
+            // Keep comments and empty lines as-is
+            if (empty($trimmedLine) || $trimmedLine[0] === '#') {
+                $newLines[] = $line;
+                continue;
+            }
+            
+            // Parse and update KEY=VALUE lines
+            if (strpos($trimmedLine, '=') !== false) {
+                list($key, $oldValue) = explode('=', $trimmedLine, 2);
+                $key = trim($key);
+                
+                // Don't allow updating ADMIN_TOKEN
+                if ($key === 'ADMIN_TOKEN') {
+                    $newLines[] = $line;
+                    continue;
+                }
+                
+                // If we have a new value for this key, update it
+                if (isset($input[$key])) {
+                    $newValue = $input[$key];
+                    // Add quotes if value contains spaces or special chars
+                    if (strpos($newValue, ' ') !== false || strpos($newValue, '#') !== false) {
+                        $newValue = '"' . $newValue . '"';
+                    }
+                    $newLines[] = $key . '=' . $newValue;
+                    $updatedKeys[] = $key;
+                } else {
+                    $newLines[] = $line;
+                }
+            } else {
+                $newLines[] = $line;
+            }
+        }
+        
+        // Write back to .env
+        $newContent = implode("\n", $newLines);
+        if (file_put_contents($envPath, $newContent) === false) {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'error' => 'Failed to write .env file'
+            ]);
+            exit;
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'updated_keys' => $updatedKeys
+        ]);
+    } else {
+        http_response_code(405);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Method not allowed'
+        ]);
+    }
+    exit;
+}
+
 // Invalid endpoint
 http_response_code(404);
 echo json_encode([

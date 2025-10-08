@@ -303,10 +303,13 @@ if (!$authenticated && isset($_POST['admin_token'])) {
     <?php else: ?>
         <div class="header">
             <h1>Admin Dashboard</h1>
-            <form method="POST" action="/admin" style="display: inline;">
-                <input type="hidden" name="logout" value="1">
-                <button type="submit" class="logout-btn">Logout</button>
-            </form>
+            <div style="display: flex; gap: 10px;">
+                <a href="/admin/settings" class="logout-btn" style="background-color: #3a87c7; text-decoration: none; display: inline-block;">Settings</a>
+                <form method="POST" action="/admin" style="display: inline;">
+                    <input type="hidden" name="logout" value="1">
+                    <button type="submit" class="logout-btn">Logout</button>
+                </form>
+            </div>
         </div>
 
         <div class="stats">
