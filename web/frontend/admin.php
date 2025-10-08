@@ -231,6 +231,61 @@ if (!$authenticated && isset($_POST['admin_token'])) {
         .pagination .page-info {
             color: #999;
         }
+        .bulk-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: #333;
+            border-radius: 5px;
+        }
+        .bulk-actions button {
+            background-color: #c73838;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .bulk-actions button:hover {
+            background-color: #a02020;
+        }
+        .bulk-actions button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .date-delete-widget {
+            padding: 15px;
+            background-color: #333;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .date-delete-widget input[type="date"] {
+            padding: 8px;
+            border: 1px solid #444;
+            border-radius: 3px;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+        }
+        .date-delete-widget button {
+            background-color: #c73838;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .date-delete-widget button:hover {
+            background-color: #a02020;
+        }
+        .logs-table input[type="checkbox"] {
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -339,7 +394,24 @@ if (!$authenticated && isset($_POST['admin_token'])) {
                     return;
                 }
 
-                let html = '<table class="logs-table"><thead><tr>';
+                let html = '';
+                
+                // Bulk actions
+                html += '<div class="bulk-actions">';
+                html += '<input type="checkbox" id="select-all" onchange="toggleSelectAll(this)"> ';
+                html += '<label for="select-all" style="margin-right: 15px;">Select All</label>';
+                html += '<button onclick="deleteSelected()" id="delete-selected-btn" disabled>Delete Selected (<span id="selected-count">0</span>)</button>';
+                html += '</div>';
+                
+                // Date-based delete widget
+                html += '<div class="date-delete-widget">';
+                html += '<label>Delete logs created before:</label>';
+                html += '<input type="date" id="delete-before-date">';
+                html += '<button onclick="deleteBeforeDate()">Delete Logs Before Date</button>';
+                html += '</div>';
+
+                html += '<table class="logs-table"><thead><tr>';
+                html += '<th><input type="checkbox" id="select-all-header" onchange="toggleSelectAll(this)"></th>';
                 html += '<th class="sortable" onclick="toggleSort(\'id\')">ID<span class="sort-indicator">' + getSortIndicator('id') + '</span></th>';
                 html += '<th class="sortable" onclick="toggleSort(\'created\')">Created<span class="sort-indicator">' + getSortIndicator('created') + '</span></th>';
                 html += '<th class="sortable" onclick="toggleSort(\'size\')">Size<span class="sort-indicator">' + getSortIndicator('size') + '</span></th>';
@@ -353,6 +425,7 @@ if (!$authenticated && isset($_POST['admin_token'])) {
                     const jsEscapedId = logId.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
                     
                     html += '<tr>';
+                    html += '<td><input type="checkbox" class="log-checkbox" value="' + escapedId + '" data-created="' + log.created + '" onchange="updateSelectedCount()"></td>';
                     html += '<td><code>' + escapedId + '</code></td>';
                     html += '<td>' + escapedCreated + '</td>';
                     html += '<td>' + formatBytes(log.size || 0) + '</td>';
@@ -407,6 +480,91 @@ if (!$authenticated && isset($_POST['admin_token'])) {
                 html += '</div>';
                 
                 document.getElementById('logs-container').innerHTML += html;
+            }
+
+            function toggleSelectAll(checkbox) {
+                const checkboxes = document.querySelectorAll('.log-checkbox');
+                checkboxes.forEach(cb => {
+                    cb.checked = checkbox.checked;
+                });
+                
+                // Sync both select-all checkboxes
+                document.getElementById('select-all').checked = checkbox.checked;
+                document.getElementById('select-all-header').checked = checkbox.checked;
+                
+                updateSelectedCount();
+            }
+
+            function updateSelectedCount() {
+                const checkboxes = document.querySelectorAll('.log-checkbox:checked');
+                const count = checkboxes.length;
+                document.getElementById('selected-count').textContent = count;
+                document.getElementById('delete-selected-btn').disabled = count === 0;
+            }
+
+            async function deleteSelected() {
+                const checkboxes = document.querySelectorAll('.log-checkbox:checked');
+                const logIds = Array.from(checkboxes).map(cb => cb.value);
+                
+                if (logIds.length === 0) return;
+                
+                if (!confirm(`Are you sure you want to delete ${logIds.length} log(s)?`)) {
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/admin-proxy/bulk-delete', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ ids: logIds })
+                    });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        alert(`Successfully deleted ${data.deleted_count} log(s)`);
+                        loadLogs(currentPage);
+                    } else {
+                        alert('Failed to delete logs: ' + (data.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    alert('Error deleting logs: ' + error.message);
+                }
+            }
+
+            async function deleteBeforeDate() {
+                const dateInput = document.getElementById('delete-before-date');
+                const date = dateInput.value;
+                
+                if (!date) {
+                    alert('Please select a date');
+                    return;
+                }
+                
+                if (!confirm(`Are you sure you want to delete all logs created before ${date}?`)) {
+                    return;
+                }
+                
+                try {
+                    const response = await fetch('/admin-proxy/delete-before', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ date: date })
+                    });
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        alert(`Successfully deleted ${data.deleted_count} log(s)`);
+                        loadLogs(currentPage);
+                    } else {
+                        alert('Failed to delete logs: ' + (data.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    alert('Error deleting logs: ' + error.message);
+                }
             }
 
             function formatBytes(bytes) {
