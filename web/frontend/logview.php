@@ -5,12 +5,21 @@ $id = new Id(substr($_SERVER['REQUEST_URI'], 1));
 $log = new Log($id);
 $shouldWrapLogLines = filter_var($_COOKIE["WRAP_LOG_LINES"] ?? "true", FILTER_VALIDATE_BOOLEAN);
 
+// Check if log is encrypted
+$isEncrypted = false;
+if ($log->exists()) {
+    $config = Config::Get('storage');
+    $storageId = $config['storageId'];
+    $storage = $config['storages'][$storageId]['class'];
+    $isEncrypted = $storage::IsEncrypted($id);
+}
+
 $title = "mclo.gs - Paste, share & analyse your Minecraft logs";
 $description = "Easily paste your Minecraft logs to share and analyse them.";
 if (!$log->exists()) {
     $title = "Log not found - mclo.gs";
     http_response_code(404);
-} else {
+} else if (!$isEncrypted) {
     $codexLog = $log->get();
     $analysis = $log->getAnalysis();
     $information = $analysis->getInformation();
@@ -109,6 +118,29 @@ $themeColor = $_ENV['PRIMARY_COLOR'] ?? '#2d3943';
         <div class="row dark log-row">
             <div class="row-inner<?= $shouldWrapLogLines ? "" : " no-wrap"?>">
                 <?php if($log->exists()): ?>
+                <?php if ($isEncrypted): ?>
+                <!-- Encrypted log - show password prompt -->
+                <div class="log-info">
+                    <div class="log-title">
+                        <h1><i class="fas fa-lock"></i> Password Protected Log</h1>
+                        <div class="log-id">#<?=$id->get(); ?></div>
+                    </div>
+                </div>
+                <div class="password-prompt" style="background: #2a2a2a; padding: 40px; border-radius: 10px; text-align: center; margin: 40px 0;">
+                    <h2 style="color: #3a87c7; margin-bottom: 20px;"><i class="fa fa-lock"></i> This log is password protected</h2>
+                    <p style="color: #999; margin-bottom: 30px;">Enter the password to decrypt and view this log.</p>
+                    <input type="password" id="decrypt-password" placeholder="Enter password" style="padding: 12px; width: 300px; background: #1a1a1a; border: 1px solid #444; border-radius: 5px; color: #e0e0e0; margin-right: 10px;">
+                    <button onclick="decryptAndDisplay()" class="btn btn-blue" style="padding: 12px 24px;">Decrypt Log</button>
+                    <div id="decrypt-error" style="color: #c73838; margin-top: 15px; display: none;"></div>
+                    <div id="decrypt-loading" style="color: #3a87c7; margin-top: 15px; display: none;"><i class="fa fa-spinner fa-spin"></i> Decrypting...</div>
+                </div>
+                <textarea id="encrypted-data" style="display:none;"><?php 
+                    $storage = $config['storages'][$storageId]['class'];
+                    echo htmlspecialchars($storage::Get($id)); 
+                ?></textarea>
+                <div id="decrypted-content" style="display:none;"></div>
+                <?php else: ?>
+                <!-- Normal unencrypted log -->
                 <div class="log-info">
                     <div class="log-title">
                         <h1><i class="fas fa-file-lines"></i> <?=$codexLog->getTitle(); ?></h1>
@@ -268,6 +300,7 @@ $themeColor = $_ENV['PRIMARY_COLOR'] ?? '#2d3943';
                     ?><br />
                     <a href="mailto:<?=$legal['abuseEmail']?>?subject=Report%20mclo.gs/<?=$id->get(); ?>">Report abuse</a>
                 </div>
+                <?php endif; ?>
                 <?php else: ?>
                 <div class="not-found">
                     <div class="not-found-title">404 - Log not found.</div>
@@ -289,5 +322,104 @@ $themeColor = $_ENV['PRIMARY_COLOR'] ?? '#2d3943';
             </div>
         </div>
         <script src="js/viewer.js"></script>
+        <script>
+        // Decryption function for password-protected logs
+        async function decryptLog(encryptedBase64, password) {
+            try {
+                // Decode base64
+                const binaryString = atob(encryptedBase64);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                
+                // Extract components (salt: 16 bytes, IV: 12 bytes, rest: encrypted data)
+                const salt = bytes.slice(0, 16);
+                const iv = bytes.slice(16, 28);
+                const data = bytes.slice(28);
+                
+                // Derive key from password
+                const encoder = new TextEncoder();
+                const keyMaterial = await crypto.subtle.importKey(
+                    'raw',
+                    encoder.encode(password),
+                    'PBKDF2',
+                    false,
+                    ['deriveKey']
+                );
+                
+                const key = await crypto.subtle.deriveKey(
+                    {
+                        name: 'PBKDF2',
+                        salt: salt,
+                        iterations: 100000,
+                        hash: 'SHA-256'
+                    },
+                    keyMaterial,
+                    { name: 'AES-GCM', length: 256 },
+                    false,
+                    ['decrypt']
+                );
+                
+                // Decrypt
+                const decrypted = await crypto.subtle.decrypt(
+                    { name: 'AES-GCM', iv: iv },
+                    key,
+                    data
+                );
+                
+                return new TextDecoder().decode(decrypted);
+            } catch (e) {
+                throw new Error('Decryption failed - incorrect password or corrupted data');
+            }
+        }
+
+        async function decryptAndDisplay() {
+            const password = document.getElementById('decrypt-password').value;
+            const errorDiv = document.getElementById('decrypt-error');
+            const loadingDiv = document.getElementById('decrypt-loading');
+            
+            if (!password) {
+                errorDiv.textContent = 'Please enter a password';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            // Show loading
+            errorDiv.style.display = 'none';
+            loadingDiv.style.display = 'block';
+            
+            try {
+                const encryptedData = document.getElementById('encrypted-data').value;
+                const decrypted = await decryptLog(encryptedData, password);
+                
+                // Display decrypted content as plain text
+                const decryptedDiv = document.getElementById('decrypted-content');
+                decryptedDiv.innerHTML = '<pre style="background: #2a2a2a; padding: 20px; border-radius: 5px; color: #e0e0e0; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;">' + 
+                    decrypted.replace(/</g, '&lt;').replace(/>/g, '&gt;') + 
+                    '</pre>';
+                
+                // Hide password prompt, show decrypted content
+                document.querySelector('.password-prompt').style.display = 'none';
+                decryptedDiv.style.display = 'block';
+                loadingDiv.style.display = 'none';
+                
+            } catch (e) {
+                loadingDiv.style.display = 'none';
+                errorDiv.textContent = e.message;
+                errorDiv.style.display = 'block';
+            }
+        }
+        
+        // Allow Enter key to decrypt
+        const passwordInput = document.getElementById('decrypt-password');
+        if (passwordInput) {
+            passwordInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    decryptAndDisplay();
+                }
+            });
+        }
+        </script>
     </body>
 </html>
